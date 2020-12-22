@@ -1,5 +1,6 @@
 let countryDataArray = [];
 let currentCountryData = {};
+let currentCountryAdditionalData = {};
 
 //preloader
 $(window).on('load', function () {
@@ -23,6 +24,7 @@ const drawMapOutlineForCountry = (isoCode) => {
   countryDataArray.forEach((country) => {
     if (country.properties.iso_a3 === isoCode) {
       currentCountryData = country;
+      getAdditionalCountryData(isoCode);
       const countryOutline = layer.addData(country, { style: { color: '#ff0000', weight: 10, opacity: 0.65 } });
       const countryBounds = countryOutline.getBounds();
       map.flyToBounds(countryBounds, 14, {
@@ -40,6 +42,7 @@ const identifyCountry = (position) => {
     dataType: 'json',
     data: { latitude: position.coords.latitude, longitude: position.coords.longitude },
     success: function (response) {
+      console.log(response);
       let currentCountryISOCode = response.data.results[0].components['ISO_3166-1_alpha-3'];
       handleNewCountryChosen(currentCountryISOCode);
       drawMapOutlineForCountry(currentCountryISOCode);
@@ -90,6 +93,22 @@ const getCountryDataFromLocalJSON = async () => {
   }
 };
 
+const getAdditionalCountryData = (ISOcode) => {
+  $.ajax({
+    type: 'POST',
+    url: 'libs/php/getCountryFlagData.php',
+    dataType: 'json',
+    data: { code: ISOcode },
+    success: function (response) {
+      currentCountryAdditionalData = response.data;
+      console.log(currentCountryAdditionalData);
+    },
+    error: function (errorThrown) {
+      console.log(errorThrown);
+    }
+  });
+};
+
 const sortAlphabeticalCountryNames = (countryDataArray) => {
   return countryDataArray.sort((a, b) => (a.properties.name > b.properties.name ? 1 : -1));
 };
@@ -98,7 +117,7 @@ const populateSearchElementInNavigationBar = async (countryDataArray) => {
   sortAlphabeticalCountryNames(countryDataArray).forEach((countryDataObject) => {
     let countryName = countryDataObject.properties.name;
     let isoCode = countryDataObject.properties.iso_a3;
-    $('#country-selector').append(`<option isoCode="${isoCode}">${countryName}</option>`);
+    $('#country-selector').append(`<option value="${isoCode}">${countryName}</option>`);
   });
 };
 
@@ -119,11 +138,12 @@ const drawMapPinsForCountry = () => {
 };
 
 const handleNewCountryChosen = (isoCode) => {
+  console.log(isoCode);
   drawMapOutlineForCountry(isoCode);
   drawMapPinsForCountry();
 };
 
 //country selector event handler
 $('#country-selector').on('change', function () {
-  handleNewCountryChosen(this.isoCode);
+  handleNewCountryChosen(this.value);
 });
