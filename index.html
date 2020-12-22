@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <!-- JQuery UI CSS -->
+    <link
+      rel="stylesheet"
+      href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"
+    />
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+      integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
+      crossorigin="anonymous"
+    />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="libs/css/styles.css" />
+
+    <title>Worldasaurus2</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+  </head>
+  <body>
+    <div id="preloader"></div>
+    <nav id="nav-bar">
+      <img src="images/worldasaurus.png" alt="dino logo" width="50px" height="50px" />
+      <div id="inner-nav-container">
+        <h1 id="main-title">Worldasaurus2</h1>
+        <div class="input-group mb-3">
+          <div class="input-group-prepend" style="margin-left: 10px">
+            <label class="input-group-text" for="countrySelector">Country</label>
+          </div>
+          <select class="custom-select" id="country-selector">
+            <option selected>Choose...</option>
+          </select>
+        </div>
+      </div>
+    </nav>
+    <div id="mapid"></div>
+
+    <!-- JQuery Script -->
+    <script type="application/javascript" src="libs/js/jqueryv3.5.1.js"></script>
+
+    <script type="module" src="libs/js/script.js"></script>
+
+    <!-- Leaflet Scripts -->
+    <script
+      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+      crossorigin=""
+    ></script>
+
+    <!-- Bootstrap Script -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

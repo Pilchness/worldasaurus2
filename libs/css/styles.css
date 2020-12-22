@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Andika+New+Basic&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sigmar+One&display=swap');
+
+#mapid {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  font-family: 'Andika New Basic', sans-serif;
+  color: white;
+}
+
+#nav-bar {
+  margin-bottom: 0px;
+  display: flex;
+  color: white;
+  flex-direction: row;
+  background-color: black;
+  padding: 10px;
+  width: 100vw;
+  height: 90px;
+}
+
+#main-title {
+  font-family: 'Sigmar One', cursive !important;
+  font-size: 1.6em;
+  visibility: visible;
+  line-height: 0.75;
+  margin-bottom: 10px;
+  margin-left: 0px;
+}
+
+/*
+button {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+.leaflet-pop .leaflet-popup-content-wrapper {
+  background: rgba(63, 127, 191, 0.7);
+  color: black;
+  font-size: 1.2em;
+  line-height: 1.2em;
+  text-align: justify;
+  font-family: 'Andika New Basic', sans-serif;
+}
+
+a:link,
+a:visited,
+a:hover,
+a:active {
+  color: white;
+}
+
+h3 {
+  text-align: left !important;
+  font-size: 2em !important;
+  font-family: 'Andika New Basic', sans-serif !important;
+}
+
+h5 {
+  text-align: left !important;
+  font-size: 1em !important;
+  font-family: 'Andika New Basic', sans-serif !important;
+}
+
+img.contain {
+  object-fit: contain;
+  width: 90px;
+  height: 90px;
+}
+
+.leaflet-pop .leaflet-popup-content-wrapper a {
+  color: black;
+}
+.leaflet-pop .leaflet-popup-tip-container {
+  width: 30px;
+  height: 15px;
+  border: 0px;
+}
+.leaflet-pop .leaflet-popup-tip {
+  width: 0px;
+  height: 0px;
+  border: 0px;
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border: none !important;
+}
+
+.marker-tooltip {
+  background: rgba(63, 127, 191, 0.7);
+  border: 2px solid black;
+  width: 20em;
+  white-space: normal;
+  font-family: 'Andika New Basic', sans-serif !important;
+  font-size: 1em;
+}
+
+.country-tooltip {
+  background: rgba(63, 191, 74, 0.7);
+  border: 2px solid black;
+  width: 10em;
+  white-space: normal;
+  font-family: 'Andika New Basic', sans-serif !important;
+  font-size: 1.3em;
+}
+
+.leaflet-tooltip-left.marker-tooltip::before {
+  border-left-color: black;
+}
+.leaflet-tooltip-right.marker-tooltip::before {
+  border-right-color: black;
+}
+
+figcaption {
+  font-size: 12px;
+  text-align: left;
+  padding-bottom: 3px;
+}
+
+ul {
+  display: inline-flex;
+  flex-direction: column;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dropdown {
+  background-color: rgba(63, 127, 191, 0.2);
+  border: 0;
+  width: 190px;
+  text-align: left;
+  height: 30px;
+  color: white;
+}
+
+#map-buton-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: auto;
+  flex-wrap: wrap;
+}
+
+#map-title-text {
+  justify-content: left;
+}
+::placeholder {
+  Chrome, Firefox, Opera, Safari 10.1+ 
+  color: white;
+  opacity: 1;  Firefox 
+}
+
+:-ms-input-placeholder {
+   Internet Explorer 10-11 
+  color: white;
+}
+
+::-ms-input-placeholder {
+  /* Microsoft Edge 
+  color: white;
+}
+
+.form-control:focus {
+  border-color: inherit;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+input:focus {
+  outline: none !important;
+}
+
+#content {
+  z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+
+
+#country-search {
+  background-color: rgba(63, 127, 191, 0.1);
+  color: rgba(63, 127, 191, 0.7);
+}
+
+#search-box {
+  width: 10em;
+  margin-left: 10px;
+  padding: 0px;
+  border: none;
+  -webkit-appearance: none;
+}
+
+input[type='search'] {
+  font-size: 14px !important;
+  font-family: 'Andika New Basic', sans-serif !important;
+  line-height: 1;
+  border: 0;
+  outline: 0;
+  padding-left: 8px !important;
+  margin: 0 !important;
+}
+
+#logo-nav {
+  background-color: rgba(63, 127, 191, 0.1);
+  width: 80px;
+  position: absolute;
+  margin-top: 0px;
+  padding: 10px 0px 20px 0px;
+  text-align: center;
+  height: 100vh;
+}
+
+#logo-list {
+  margin: 0;
+  padding: 0;
+}
+
+td {
+  font-size: 1em;
+  width: 30px;
+}
+
+table {
+  width: 100%;
+}
+
+.map-button {
+  padding: 0;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.reset-button {
+  padding: 0;
+  width: 140px;
+  height: 50px;
+  background-color: rgba(63, 127, 191, 0.7);
+  color: white;
+}
+
+@media only screen and (max-width: 575px) {
+  #main-title {
+    font-family: 'Sigmar One', cursive !important;
+    visibility: visible;
+    line-height: 0.75;
+    margin-bottom: 5px;
+    font-size: 32px;
+  }
+
+  #dino-logo {
+    width: 100vw;
+  }
+
+  #country-search {
+    height: 40px;
+  }
+
+  #search-box {
+    width: 16em;
+    margin-left: 10px;
+    line-height: 30px;
+    padding: 5px;
+    border: none;
+    -webkit-appearance: none;
+  }
+
+  input[type='search'] {
+    font-size: 24px !important;
+    font-family: 'Andika New Basic', sans-serif !important;
+    line-height: 1;
+    border: 0;
+    outline: 0;
+    padding-left: 8px !important;
+    margin: 0 !important;
+  }
+
+  .dropdown {
+    width: 150px;
+    text-align: left;
+    height: 30px;
+    font-size: 12px !important;
+  }
+}
+*/
