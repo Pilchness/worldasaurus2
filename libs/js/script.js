@@ -9,7 +9,7 @@ const currentCountry = {
   borders: [],
   geoData: {},
   capitalCity: { lat: 0, lng: 0, name: '' },
-  mapPins: { airports: [{ lat: 0, lng: 0, name: '' }], cities: [] },
+  mapPins: { cities: [], pois: [] },
   population: 0,
   flagUrl: null,
   photoUrls: [],
@@ -17,17 +17,11 @@ const currentCountry = {
   weather: {}
 };
 
-// const cityIcon = L.divIcon({
-//   html: '<i class="fa fa-city fa-2x"></i>',
-//   iconSize: [10, 10],
-//   className: 'myDivIcon'
-// });
-
 //initiate Leaflet map
 const map = L.map('mapid', { zoomControl: false }).setView([51.505, -0.09], 5);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution:
-    'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    '<span style="font-size: 7px">Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community</span>'
 }).addTo(map);
 
 //initiate layers and markers
@@ -35,25 +29,63 @@ const layer = L.geoJSON().addTo(map);
 const markers = L.markerClusterGroup();
 map.addLayer(markers);
 
-const addMarkerGroupToMap = (markerData, icon) => {
+const addMarkerGroupToMap = async (markerData, icon) => {
   console.log(icon);
   for (let i = 0; i < markerData.length; i++) {
     if (markerData[i]) {
       let a = markerData[i];
-      //let title = a[2];
+      //a[0]=Lat, a[1]=Lng, a[2]=name, a[3]=population, a[4]= geo id
+      let citySize = Math.floor(a[3] / 100000) + 2; //scale for icon size based on population
       let marker = L.marker(L.latLng(a[0], a[1]), {
         icon: L.divIcon({
-          html: `<i class="fa fa-${icon} fa-2x"></i>`,
-          iconSize: [10, 10],
+          html: `<i class="fa fa-${icon} fa-${citySize}x" id=${a[4]} style="color: white"></i>`,
+          iconSize: [20, 20],
           className: 'myDivIcon'
         })
       });
-      //marker.bindPopup(title);
+      let lastClick = Date.now();
       marker.on('click', (e) => {
-        console.log(a[2]);
-        //console.log(e);
-        //$('#map-pin-modal').toggle();
-        //e.originalEvent.stopPropagation();
+        let thisClick = Date.now();
+        let clickDiff = thisClick - lastClick;
+        lastClick = thisClick;
+        e.originalEvent.stopPropagation();
+
+        if (clickDiff < 150) {
+          $(`#${a[4]}`).css('color', 'rgba(63, 127, 191, 1)');
+          map.panTo(marker.getLatLng());
+          $('.myDivIcon').on('click', function () {
+            $(`#${a[4]}`).css('color', 'white');
+          });
+          $('#poi-name').text(a[2]);
+          $('#poi-coords-lat').text(`Lat: ${a[0]}`);
+          $('#poi-coords-lng').text(`Lng: ${a[1]}`);
+          if (a[3] > 0) {
+            $('#poi-pop').text(`Population: ${a[3]}`);
+          }
+          getAdditionalGeodata(a[4]).then((result) => {
+            if (result.data.wikipediaURL) {
+              let wikiLink = result.data.wikipediaURL;
+              $('#poi-name').html(`<a href='https://${wikiLink}' target='_blank'>${a[2]}</a>`);
+              if (wikiLink) {
+                getWikiSummary(wikiLink.replace('en.wikipedia.org/wiki/', '')).then((result) => {
+                  console.log(result);
+                  if (result.data.originalimage) {
+                    $('#poi-image').attr('src', result.data.originalimage.source);
+                    $('#poi-image').attr('alt', result.data.title);
+                    $('#poi-image-link').attr('href', `https://${wikiLink}`);
+                  }
+                  if (result.data.extract) {
+                    $('#poi-text').text(result.data.extract.substring(0, 300) + '..');
+                    $('#poi-link').html(
+                      `<a style="font-size: 12px" href='https://${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
+                    );
+                  }
+                });
+              }
+            }
+            $('#map-pin-modal').toggle();
+          });
+        }
       });
 
       markers.addLayer(marker);
@@ -146,8 +178,6 @@ const getAdditionalCountryData = (ISOcode) => {
       currentCountry.area = response.data.area;
       currentCountry.capitalCity = response.data.capital;
 
-      //console.log(currentCountry);
-
       drawMapPinsForCountry();
     },
     error: function (errorThrown) {
@@ -170,26 +200,6 @@ const populateSearchElementInNavigationBar = async (countryDataArray) => {
 
 getCountryDataFromLocalJSON();
 
-// const addCityPin = (cityName) => {
-//   $.ajax({
-//     url: 'libs/php/getLatLongFromPlacename.php',
-//     type: 'POST',
-//     dataType: 'json',
-//     data: {
-//       city: cityName.replace(/ /g, '%20')
-//     },
-
-//     success: function (result) {
-//       let coords = result.data.results[0].geometry;
-//       currentCountry.mapPins.cities.push(result.data.results[0]);
-//       addMarkerGroupToMap([[coords.lat, coords.lng, cityName]]);
-//     },
-//     error: function (error) {
-//       console.log(error);
-//     }
-//   });
-// };
-
 const getCityData = async (startRow) => {
   return new Promise((resolve, reject) => {
     $.ajax({
@@ -211,12 +221,90 @@ const getCityData = async (startRow) => {
   });
 };
 
-const addMarkerGroup = (search, icon) => {
-  console.log(search, icon);
+const getPoiData = async (category) => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: 'libs/php/geoNames.php',
+      type: 'POST',
+      dataType: 'json',
+      data: {
+        query: 'poi',
+        isoA2: currentCountry.iso_a2,
+        class: category
+      },
+      success: function (result) {
+        resolve(result);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const getAdditionalGeodata = async (geoId) => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: 'libs/php/geoNames.php',
+      type: 'POST',
+      dataType: 'json',
+      data: {
+        query: 'id',
+        id: geoId
+      },
+      success: function (result) {
+        resolve(result);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const getWikiSummary = async (pageTitle) => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: 'libs/php/wikiPreview.php',
+      type: 'POST',
+      dataType: 'json',
+      data: {
+        pageTitle: pageTitle
+      },
+      success: function (result) {
+        resolve(result);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const getPhoto = async (searchWord) => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: 'libs/php/imageSearch.php',
+      type: 'POST',
+      dataType: 'json',
+      data: {
+        searchWord: searchWord.replace(/\s/g, '&') //change spaces to &
+      },
+      success: function (result) {
+        resolve(result.data[0]);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const addMarkerGroup = (search, icon, dataLocation) => {
   addMarkerGroupToMap(
-    currentCountry.mapPins.cities.map((city) => {
-      if (city.fcl === search || city.fcode === search) {
-        return [city.lat, city.lng, city.name, city.population];
+    currentCountry.mapPins[dataLocation].map((poi) => {
+      if (poi.fcl === search || poi.fcode === search) {
+        return [poi.lat, poi.lng, poi.name, poi.population, poi.geonameId];
       } else return;
     }),
     icon
@@ -226,12 +314,39 @@ const addMarkerGroup = (search, icon) => {
 const drawMapPinsForCountry = async () => {
   //addCityPin(currentCountry.capitalCity);
   getCityData(1).then((cities) => {
-    console.log(cities);
     currentCountry.mapPins.cities = cities.data.geonames;
-    addMarkerGroup('P', 'city');
-    addMarkerGroup('AIRP', 'plane');
-    addMarkerGroup('LKS', 'water');
-    addMarkerGroup('HSP', 'hospital');
+    addMarkerGroup('P', 'city', 'cities');
+    addMarkerGroup('AIRP', 'plane', 'cities');
+  });
+  getPoiData('H').then((pois) => {
+    currentCountry.mapPins.geoH = pois.data.geonames;
+    addMarkerGroup('LK', 'water', 'geoH');
+    addMarkerGroup('RSV', 'water', 'geoH');
+  });
+  getPoiData('L').then((pois) => {
+    currentCountry.mapPins.geoL = pois.data.geonames;
+    console.log(pois.data.geonames);
+    addMarkerGroup('PRK', 'squirrel', 'geoL');
+    addMarkerGroup('RESW', 'squirrel', 'geoL');
+    addMarkerGroup('RESV', 'squirrel', 'geoL');
+    addMarkerGroup('PRT', 'ship', 'geoL');
+  });
+  getPoiData('S').then((pois) => {
+    currentCountry.mapPins.geoS = pois.data.geonames;
+    addMarkerGroup('CH', 'church', 'geoS');
+    addMarkerGroup('CTRR', 'church', 'geoS');
+    addMarkerGroup('CMP', 'campground', 'geoS');
+    addMarkerGroup('CSTL', 'fort-awesome', 'geoS');
+    addMarkerGroup('FRM', 'tractor', 'geoS');
+    addMarkerGroup('GDN', 'flower-tulip', 'geoS');
+    addMarkerGroup('UNIV', 'university', 'geoS');
+  });
+  getPoiData('T').then((pois) => {
+    currentCountry.mapPins.geoT = pois.data.geonames;
+    console.log(pois.data);
+    addMarkerGroup('BCH', 'umbrella-beach', 'geoT');
+    addMarkerGroup('DSRT', 'cactus', 'geoT');
+    addMarkerGroup('MT', 'mountains', 'geoT');
   });
 };
 
@@ -239,7 +354,11 @@ const handleNewCountryChosen = (isoCode) => {
   drawMapOutlineForCountry(isoCode);
 };
 
-//country selector event handler
-$('#country-selector').on('change', function () {
-  handleNewCountryChosen(this.value);
+$(document).ready(function () {
+  $('#country-selector').on('change', function () {
+    handleNewCountryChosen(this.value);
+  });
+  $('#close-poi-info').on('click', function () {
+    $('#map-pin-modal').hide();
+  });
 });

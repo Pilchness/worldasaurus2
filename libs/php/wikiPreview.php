@@ -1,15 +1,7 @@
 <?php
 
 $executionStartTime = microtime(true) / 1000;
-
-if($_REQUEST['query'] === 'cities') {
-$url =
-  'http://api.geonames.org/searchJSON?country=' . $_REQUEST['isoA2'] . '&startRow=' . $_REQUEST['start'] . '&maxRows=1000&formatted=true&lang=en&username=pilchness';
-} else if($_REQUEST['query'] === 'id'){
-  $url = 'http://api.geonames.org/getJSON?geonameId=' . $_REQUEST['id'] . '&username=pilchness&style=full';
-} else if($_REQUEST['query'] === 'poi'){
-  $url = 'http://api.geonames.org/searchJSON?country=' . $_REQUEST['isoA2'] . '&featureClass=' . $_REQUEST['class'] . '&maxRows=1000&formatted=true&lang=en&username=pilchness';
-} else {$url = '';}
+$url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . $_REQUEST['pageTitle'] . '?redirect=false';
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);

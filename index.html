@@ -54,6 +54,43 @@
     </nav>
     <div id="mapid"></div>
 
+    <div id="logo-nav">
+      <ul id="logo-list">
+        <li id="reset">M1</li>
+        <li id="info">M2</li>
+        <li id="maptype">M3</li>
+        <li id="weather">M4</li>
+        <li id="quiz">M5</li>
+      </ul>
+    </div>
+
+    <div class="modal" id="map-pin-modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div style="text-align: right">
+              <button type="button" style="color: #003380" id="close-poi-info" class="close" data-dismiss="modal">
+                &times;
+              </button>
+            </div>
+            <h2 id="poi-name"></h2>
+            <div id="poi-content">
+              <div>
+                <span id="poi-coords-lat"></span><br />
+                <span id="poi-coords-lng"></span><br />
+                <span id="poi-pop"></span>
+              </div>
+              <a id="poi-image-link" href="https://en.wikipedia.org" target="_blank">
+                <img id="poi-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
+              /></a>
+            </div>
+            <p id="poi-text" style="font-size: 10px"></p>
+            <p id="poi-link"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- JQuery Script -->
     <script type="application/javascript" src="libs/js/jqueryv3.5.1.js"></script>
 
