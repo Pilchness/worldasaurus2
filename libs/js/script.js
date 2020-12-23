@@ -17,6 +17,12 @@ const currentCountry = {
   weather: {}
 };
 
+// const cityIcon = L.divIcon({
+//   html: '<i class="fa fa-city fa-2x"></i>',
+//   iconSize: [10, 10],
+//   className: 'myDivIcon'
+// });
+
 //initiate Leaflet map
 const map = L.map('mapid', { zoomControl: false }).setView([51.505, -0.09], 5);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -29,13 +35,29 @@ const layer = L.geoJSON().addTo(map);
 const markers = L.markerClusterGroup();
 map.addLayer(markers);
 
-const addMarkerGroupToMap = (markerData) => {
+const addMarkerGroupToMap = (markerData, icon) => {
+  console.log(icon);
   for (let i = 0; i < markerData.length; i++) {
-    let a = markerData[i];
-    let title = a[2];
-    let marker = L.marker(L.latLng(a[0], a[1]), { title: title });
-    marker.bindPopup(title);
-    markers.addLayer(marker);
+    if (markerData[i]) {
+      let a = markerData[i];
+      //let title = a[2];
+      let marker = L.marker(L.latLng(a[0], a[1]), {
+        icon: L.divIcon({
+          html: `<i class="fa fa-${icon} fa-2x"></i>`,
+          iconSize: [10, 10],
+          className: 'myDivIcon'
+        })
+      });
+      //marker.bindPopup(title);
+      marker.on('click', (e) => {
+        console.log(a[2]);
+        //console.log(e);
+        //$('#map-pin-modal').toggle();
+        //e.originalEvent.stopPropagation();
+      });
+
+      markers.addLayer(marker);
+    }
   }
 };
 
@@ -124,7 +146,7 @@ const getAdditionalCountryData = (ISOcode) => {
       currentCountry.area = response.data.area;
       currentCountry.capitalCity = response.data.capital;
 
-      console.log(currentCountry);
+      //console.log(currentCountry);
 
       drawMapPinsForCountry();
     },
@@ -148,27 +170,27 @@ const populateSearchElementInNavigationBar = async (countryDataArray) => {
 
 getCountryDataFromLocalJSON();
 
-const addCityPin = (cityName) => {
-  $.ajax({
-    url: 'libs/php/getLatLongFromPlacename.php',
-    type: 'POST',
-    dataType: 'json',
-    data: {
-      city: cityName.replace(/ /g, '%20')
-    },
+// const addCityPin = (cityName) => {
+//   $.ajax({
+//     url: 'libs/php/getLatLongFromPlacename.php',
+//     type: 'POST',
+//     dataType: 'json',
+//     data: {
+//       city: cityName.replace(/ /g, '%20')
+//     },
 
-    success: function (result) {
-      let coords = result.data.results[0].geometry;
-      currentCountry.mapPins.cities.push({ lat: coords.lat, lng: coords.lng, name: cityName });
-      addMarkerGroupToMap([[coords.lat, coords.lng, cityName]]);
-    },
-    error: function (error) {
-      console.log(error);
-    }
-  });
-};
+//     success: function (result) {
+//       let coords = result.data.results[0].geometry;
+//       currentCountry.mapPins.cities.push(result.data.results[0]);
+//       addMarkerGroupToMap([[coords.lat, coords.lng, cityName]]);
+//     },
+//     error: function (error) {
+//       console.log(error);
+//     }
+//   });
+// };
 
-const getCityData = async () => {
+const getCityData = async (startRow) => {
   return new Promise((resolve, reject) => {
     $.ajax({
       url: 'libs/php/geoNames.php',
@@ -176,7 +198,8 @@ const getCityData = async () => {
       dataType: 'json',
       data: {
         query: 'cities',
-        isoA2: currentCountry.iso_a2
+        isoA2: currentCountry.iso_a2,
+        start: startRow
       },
       success: function (result) {
         resolve(result);
@@ -188,15 +211,27 @@ const getCityData = async () => {
   });
 };
 
+const addMarkerGroup = (search, icon) => {
+  console.log(search, icon);
+  addMarkerGroupToMap(
+    currentCountry.mapPins.cities.map((city) => {
+      if (city.fcl === search || city.fcode === search) {
+        return [city.lat, city.lng, city.name, city.population];
+      } else return;
+    }),
+    icon
+  );
+};
+
 const drawMapPinsForCountry = async () => {
-  addCityPin(currentCountry.capitalCity);
-  getCityData().then((cities) => {
+  //addCityPin(currentCountry.capitalCity);
+  getCityData(1).then((cities) => {
+    console.log(cities);
     currentCountry.mapPins.cities = cities.data.geonames;
-    addMarkerGroupToMap(
-      currentCountry.mapPins.cities.map((city) => {
-        return [city.lat, city.lng, city.name];
-      })
-    );
+    addMarkerGroup('P', 'city');
+    addMarkerGroup('AIRP', 'plane');
+    addMarkerGroup('LKS', 'water');
+    addMarkerGroup('HSP', 'hospital');
   });
 };
 

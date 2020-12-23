@@ -4,7 +4,7 @@ $executionStartTime = microtime(true) / 1000;
 
 if($_REQUEST['query'] === 'cities') {
 $url =
-  'http://api.geonames.org/searchJSON?country=' . $_REQUEST['isoA2'] . '&formatted=true&lang=en&username=pilchness';
+  'http://api.geonames.org/searchJSON?country=' . $_REQUEST['isoA2'] . '&startRow=' . $_REQUEST['start'] . '&maxRows=1000&formatted=true&lang=en&username=pilchness';
 } else {
   $url = '';
 }

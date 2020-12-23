@@ -16,10 +16,14 @@ body {
   display: flex;
   color: white;
   flex-direction: row;
-  background-color: black;
+  background-color: rgba(63, 127, 191, 0.5);
   padding: 10px;
-  width: 100vw;
+  width: 350px;
   height: 90px;
+  position: fixed;
+  z-index: 5000;
+  top: 0;
+  left: 0;
 }
 
 #main-title {
@@ -29,6 +33,52 @@ body {
   line-height: 0.75;
   margin-bottom: 10px;
   margin-left: 0px;
+}
+/* 
+.enterSlowlyLeft {
+  -webkit-animation-name: enterSlowlyLeft;
+  animation-name: enterSlowlyLeft;
+}
+
+@keyframes enterSlowlyLeft {
+  from {
+    opacity: 0;
+    -webkit-transform: translate3d(0%, 0, 0);
+    transform: translate3d(0%, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translate3d(100%, 0, 0);
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@-webkit-keyframes enterSlowlyLeft {
+  from {
+    opacity: 0;
+    -webkit-transform: translate3d(0%, 0, 0);
+    transform: translate3d(0%, 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translate3d(100%, 0, 0);
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.animated.modal-dialog {
+  -webkit-animation-duration: 3s;
+  animation-duration: 3s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+} */
+
+@media only screen and (max-width: 575px) {
+  #nav-bar {
+    width: 100vw;
+  }
 }
 
 /*
