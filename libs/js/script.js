@@ -4,6 +4,7 @@ const currentCountry = {
   iso_a3: '',
   iso_a2: '',
   name: '',
+  fullName: '',
   region: '',
   area: 0,
   borders: [],
@@ -13,9 +14,12 @@ const currentCountry = {
   population: 0,
   flagUrl: null,
   photoUrls: [],
-  currency: { name: '', code: '', exchangeRate: 0 },
+  currency: '',
   weather: {}
 };
+
+const countryISOLookUp = {};
+let currentModal = '';
 
 //initiate Leaflet map
 const map = L.map('mapid', { zoomControl: false }).setView([51.505, -0.09], 5);
@@ -29,8 +33,39 @@ const layer = L.geoJSON().addTo(map);
 const markers = L.markerClusterGroup();
 map.addLayer(markers);
 
+// Create additional Control placeholders
+function addControlPlaceholders(map) {
+  const corners = map._controlCorners;
+  corners['verticalcenterleft'] = L.DomUtil.create('div', 'leaflet-verticalcenter', map._controlContainer);
+}
+addControlPlaceholders(map);
+
+const buttons = [
+  L.easyButton({
+    id: 'country-info-button',
+    states: [{ icon: 'fa-info' }]
+  }),
+  L.easyButton({
+    id: 'country-images-button',
+    states: [{ icon: 'fa-images' }]
+  }),
+  L.easyButton({
+    id: 'country-currency-button',
+    states: [{ icon: 'fa-dollar-sign' }]
+  }),
+  L.easyButton({
+    id: 'country-weather-button',
+    states: [{ icon: 'fa-cloud-sun-rain' }]
+  }),
+  L.easyButton({
+    id: 'settings-button',
+    states: [{ icon: 'fa-cog' }]
+  })
+];
+
+L.easyBar(buttons).setPosition('verticalcenterleft').addTo(map);
+
 const addMarkerGroupToMap = async (markerData, icon) => {
-  console.log(icon);
   for (let i = 0; i < markerData.length; i++) {
     if (markerData[i]) {
       let a = markerData[i];
@@ -50,7 +85,11 @@ const addMarkerGroupToMap = async (markerData, icon) => {
         lastClick = thisClick;
         e.originalEvent.stopPropagation();
 
-        if (clickDiff < 150) {
+        if (clickDiff < 1000) {
+          $('#poi-image').removeAttr('src');
+          $('#poi-image').attr('alt', '');
+          $('#poi-link').empty();
+          $('#poi-text').empty();
           $(`#${a[4]}`).css('color', 'rgba(63, 127, 191, 1)');
           map.panTo(marker.getLatLng());
           $('.myDivIcon').on('click', function () {
@@ -68,12 +107,12 @@ const addMarkerGroupToMap = async (markerData, icon) => {
               $('#poi-name').html(`<a href='https://${wikiLink}' target='_blank'>${a[2]}</a>`);
               if (wikiLink) {
                 getWikiSummary(wikiLink.replace('en.wikipedia.org/wiki/', '')).then((result) => {
-                  console.log(result);
                   if (result.data.originalimage) {
                     $('#poi-image').attr('src', result.data.originalimage.source);
                     $('#poi-image').attr('alt', result.data.title);
                     $('#poi-image-link').attr('href', `https://${wikiLink}`);
                   }
+
                   if (result.data.extract) {
                     $('#poi-text').text(result.data.extract.substring(0, 300) + '..');
                     $('#poi-link').html(
@@ -115,6 +154,7 @@ const drawMapOutlineForCountry = (isoCode) => {
   countryDataArray.forEach((country) => {
     if (country.properties.iso_a3 === isoCode) {
       currentCountry.geoData = country;
+      currentCountry.name = country.properties.name;
       currentCountry.iso_a2 = country.properties.iso_a2;
       currentCountry.iso_a3 = isoCode;
       getAdditionalCountryData(isoCode);
@@ -169,9 +209,10 @@ const getAdditionalCountryData = (ISOcode) => {
     dataType: 'json',
     data: { code: ISOcode },
     success: function (response) {
-      currentCountry.name = response.data.name;
+      console.log(response);
+      currentCountry.fullName = response.data.name;
       currentCountry.borders = response.data.borders;
-      currentCountry.currency.name = response.data.currencies[0].code;
+      currentCountry.currency = response.data.currencies[0];
       currentCountry.flagUrl = response.data.flag;
       currentCountry.population = response.data.population;
       currentCountry.region = response.data.region;
@@ -195,6 +236,7 @@ const populateSearchElementInNavigationBar = async (countryDataArray) => {
     let countryName = countryDataObject.properties.name;
     let isoCode = countryDataObject.properties.iso_a3;
     $('#country-selector').append(`<option value="${isoCode}">${countryName}</option>`);
+    countryISOLookUp[isoCode] = countryName;
   });
 };
 
@@ -263,6 +305,7 @@ const getAdditionalGeodata = async (geoId) => {
 };
 
 const getWikiSummary = async (pageTitle) => {
+  console.log(pageTitle);
   return new Promise((resolve, reject) => {
     $.ajax({
       url: 'libs/php/wikiPreview.php',
@@ -281,7 +324,22 @@ const getWikiSummary = async (pageTitle) => {
   });
 };
 
-const getPhoto = async (searchWord) => {
+const getWikiCurrencies = async () => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: 'libs/php/wikiCurrencies.php',
+      type: 'GET',
+      success: function (result) {
+        resolve(result);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const getPhotos = async (searchWord) => {
   return new Promise((resolve, reject) => {
     $.ajax({
       url: 'libs/php/imageSearch.php',
@@ -291,7 +349,22 @@ const getPhoto = async (searchWord) => {
         searchWord: searchWord.replace(/\s/g, '&') //change spaces to &
       },
       success: function (result) {
-        resolve(result.data[0]);
+        resolve(result.data);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
+const getCurrency = async () => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      type: 'POST',
+      url: 'libs/php/getCurrencyData.php',
+      success: function (result) {
+        resolve(result.data);
       },
       error: function (error) {
         reject(error);
@@ -312,7 +385,6 @@ const addMarkerGroup = (search, icon, dataLocation) => {
 };
 
 const drawMapPinsForCountry = async () => {
-  //addCityPin(currentCountry.capitalCity);
   getCityData(1).then((cities) => {
     currentCountry.mapPins.cities = cities.data.geonames;
     addMarkerGroup('P', 'city', 'cities');
@@ -325,7 +397,6 @@ const drawMapPinsForCountry = async () => {
   });
   getPoiData('L').then((pois) => {
     currentCountry.mapPins.geoL = pois.data.geonames;
-    console.log(pois.data.geonames);
     addMarkerGroup('PRK', 'squirrel', 'geoL');
     addMarkerGroup('RESW', 'squirrel', 'geoL');
     addMarkerGroup('RESV', 'squirrel', 'geoL');
@@ -343,7 +414,6 @@ const drawMapPinsForCountry = async () => {
   });
   getPoiData('T').then((pois) => {
     currentCountry.mapPins.geoT = pois.data.geonames;
-    console.log(pois.data);
     addMarkerGroup('BCH', 'umbrella-beach', 'geoT');
     addMarkerGroup('DSRT', 'cactus', 'geoT');
     addMarkerGroup('MT', 'mountains', 'geoT');
@@ -354,6 +424,118 @@ const handleNewCountryChosen = (isoCode) => {
   drawMapOutlineForCountry(isoCode);
 };
 
+const borderingCountries = () => {
+  let borderText = '';
+  currentCountry.borders.forEach((border) => {
+    borderText += `<span id='${border}' class='border-list-item'>${countryISOLookUp[border]}</span>, `;
+  });
+
+  return borderText.slice(0, -2);
+};
+
+const prepareCountryInfoModal = () => {
+  $('.country-name').text(currentCountry.name);
+  $('#country-flag').attr('src', currentCountry.flagUrl);
+  $('#country-flag').attr('alt', `flag of ${currentCountry.name}`);
+  $('#country-facts-list').empty();
+  $('#country-facts-list').append(`<li>Region: ${currentCountry.region}</li>`);
+  $('#country-facts-list').append(`<li>Area: ${currentCountry.area} km²</li>`);
+  $('#country-facts-list').append(`<li>Capital City: ${currentCountry.capitalCity}</li>`);
+  $('#country-facts-list').append(`<li>Population: ${currentCountry.population}</li>`);
+  $('#country-facts-list').append(`<li>Borders: ${borderingCountries()}</li>`);
+  $('.border-list-item').on('click', function (e) {
+    handleNewCountryChosen(e.target.id);
+    $('#country-info-modal').hide();
+  });
+};
+
+const displayPhotos = (result, photoNumber) => {
+  console.log(result[photoNumber]);
+  $('#country-photo').attr('src', result[photoNumber].urls.small);
+  $('#country-photo').attr('alt', result[photoNumber].alt_description);
+  $('#country-photo-info').empty();
+  $('#country-photo-info').append(`<li>Description: ${result[photoNumber].alt_description}</li>`);
+  $('#country-photo-info').append(`<li>Photographer: ${result[photoNumber].user.name}</li>`);
+  $('#country-photo-info').append(`<li>Date: ${new Date(result[photoNumber].created_at).toString().slice(4, 15)}</li>`);
+  if (result[photoNumber].user.portfolio_url) {
+    $('#country-photo-info').append(
+      `<li>Portfolio: <a href='${result[photoNumber].user.portfolio_url}' target='_blank'>${result[photoNumber].user.portfolio_url}</a></li>`
+    );
+  }
+};
+
+const prepareCountryImagesModal = async () => {
+  getPhotos(currentCountry.name).then((result) => {
+    let photoNumber = 0;
+    $('#photo-left').css('visibility', 'hidden');
+    displayPhotos(result, photoNumber);
+
+    $('#photo-left').on('click', function () {
+      $('#photo-right').css('visibility', 'visible');
+
+      photoNumber--;
+      if (photoNumber <= 0) {
+        photoNumber = 0;
+        $('#photo-left').css('visibility', 'hidden');
+      }
+      displayPhotos(result, photoNumber);
+    });
+    $('#photo-right').on('click', function () {
+      $('#photo-left').css('visibility', 'visible');
+      photoNumber++;
+      if (photoNumber >= result.length - 1) {
+        photoNumber = result.length - 1;
+        $('#photo-right').css('visibility', 'hidden');
+      }
+      displayPhotos(result, photoNumber);
+    });
+  });
+};
+
+const prepareCurrencyModal = async () => {
+  getCurrency().then((result) => {
+    console.log(result);
+    $('#country-currency-list').empty();
+    $('#country-currency-list').append(`<li>Name: ${currentCountry.currency.name}</li>`);
+    $('#country-currency-list').append(`<li>Symbol: ${currentCountry.currency.symbol}</li>`);
+    $('#country-currency-list').append(`<li>Exchange Rate ($): ${result[currentCountry.currency.code]}</li>`);
+    getWikiCurrencies().then((currencyData) => {
+      const wikiCurrencyData = currencyData.wikitext['*'];
+      let currencyNameIndex = wikiCurrencyData.indexOf(currentCountry.currency.code);
+      let currencyInfoString = wikiCurrencyData.slice(currencyNameIndex - 150, currencyNameIndex);
+      console.log(currencyInfoString);
+      console.log(currencyInfoString.lastIndexOf('[['));
+      let wikiCurrencyTitle = currencyInfoString.slice(
+        currencyInfoString.lastIndexOf('[[') + 2,
+        currencyInfoString.lastIndexOf(']]')
+      );
+      wikiCurrencyTitle = wikiCurrencyTitle.split(' ').join('_');
+      if (wikiCurrencyTitle.indexOf('|') !== -1) {
+        wikiCurrencyTitle = wikiCurrencyTitle.slice(0, wikiCurrencyTitle.indexOf('|'));
+      }
+      getWikiSummary(wikiCurrencyTitle).then((wiki) => {
+        console.log(wiki);
+        if (wiki.data) {
+          let wikiLink = wiki.data.content_urls.desktop.page;
+          if (wiki.data.originalimage) {
+            $('#currency-image').attr('src', wiki.data.originalimage.source);
+            $('#currency-image').attr('alt', wiki.data.title);
+            $('#currency-image-link').attr('href', wikiLink);
+          }
+
+          if (wiki.data.extract) {
+            $('#currency-text').text(wiki.data.extract.substring(0, 400) + '..');
+            $('#currency-link').html(
+              `<a style="font-size: 12px" href='${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
+            );
+          }
+        }
+      });
+    });
+    return result;
+  });
+};
+
 $(document).ready(function () {
   $('#country-selector').on('change', function () {
     handleNewCountryChosen(this.value);
@@ -361,4 +543,26 @@ $(document).ready(function () {
   $('#close-poi-info').on('click', function () {
     $('#map-pin-modal').hide();
   });
+  $('#country-info-button, #close-country-info').on('click', function () {
+    prepareCountryInfoModal();
+    $('#country-info-modal').toggle();
+  });
+  $('#country-images-button, #close-country-images').on('click', function () {
+    prepareCountryImagesModal();
+    $('#country-images-modal').toggle();
+  });
+  $('#country-currency-button, #close-country-currency').on('click', function () {
+    prepareCurrencyModal();
+    $('#country-currency-modal').toggle();
+  });
+  $('#country-weather-button, #close-country-weather').on('click', function () {
+    $('#country-weather-modal').toggle();
+  });
+  $('#settings-button, #close-settings').on('click', function () {
+    $('#settings-modal').toggle();
+  });
+
+  // $('#close-side-info').on('click', function () {
+  //   $('#info-modal').hide();
+  // });
 });

@@ -31,7 +31,7 @@ a:active {
 }
 
 a:hover {
-  color: rgba(63, 127, 191, 0.5);
+  color: black;
 }
 
 #nav-bar {
@@ -108,6 +108,69 @@ span {
   padding: 0;
 }
 
+.leaflet-verticalcenter {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  top: 180px; /* possible because the placeholder's parent is the map */
+  transform: translateY(-50%); /* using the CSS3 Transform technique */
+  padding-top: 10px;
+}
+
+.leaflet-verticalcenter .leaflet-control {
+  margin-bottom: 10px;
+  margin-left: 8px;
+}
+
+.l-button {
+  padding: 10px;
+}
+
+.map-modal {
+  z-index: 2000;
+}
+
+button {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+ul {
+  display: inline-flex;
+  flex-direction: column;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  white-space: normal;
+  float: left;
+  width: 240px;
+  height: auto;
+  word-wrap: break-word;
+}
+
+.border-list-item {
+  background-color: rgba(63, 127, 191, 0.9);
+  padding: 2px;
+}
+
+#country-flag {
+  margin-bottom: 5px;
+}
+
+span.fa {
+  font-size: 18px;
+}
+
+.fas {
+  padding: 4px 0px;
+}
 /* 
 .enterSlowlyLeft {
   -webkit-animation-name: enterSlowlyLeft;
@@ -160,12 +223,7 @@ span {
 }
 
 /*
-button {
-  outline: none !important;
-  box-shadow: none !important;
-  -webkit-appearance: none;
-  border-radius: 0;
-}
+
 
 .leaflet-pop .leaflet-popup-content-wrapper {
   background: rgba(63, 127, 191, 0.7);
