@@ -72,8 +72,8 @@
                 <span id="poi-coords-lng"></span><br />
                 <span id="poi-pop"></span>
               </div>
-              <a id="poi-image-link" href="https://en.wikipedia.org" target="_blank">
-                <img id="poi-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
+              <a id="poi-image-link" href="" target="_blank">
+                <img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="poi-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
               /></a>
             </div>
             <p id="poi-text" style="font-size: 10px"></p>
@@ -116,9 +116,10 @@
             <div style="position: relative">
            
                 <img
+                  src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif"
                   alt=""
                   id="country-photo"
-                  width="240px"
+                  width="100%"
                   height="160px"
                   style="position: absolute; top: 0; left: 0; object-fit: cover;"
                   
@@ -170,7 +171,7 @@
         </div>
         <div>
           <a id="currency-image-link" href="https://en.wikipedia.org" target="_blank">
-            <img id="currency-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
+            <img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="currency-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
           /></a>
         </div>
         <p id="currency-text" style="font-size: 10px">Loading...</p>
@@ -196,9 +197,16 @@
               </button>
             </div>
             <h2>Weather</h2>
-            <div style="display: flex; flex-direction: column">
-              <img alt="" id="country-flag" width="100px" height="auto" />
-              <ul id="country-facts-list"></ul>
+            <div style="display: flex; flex-direction: column;">
+                          <div style="display: flex; flex-direction: row">
+
+              <img alt="" id="weather-image" width="100px" height="auto" />
+                <img alt="" id="weather-symbol" width="100px" height="auto" />
+                </div>
+                <br/>
+              <ul id="country-weather-list"></ul>
+              <ul id="weather-photo-info"></ul>
+
             </div>
           </div>
         </div>

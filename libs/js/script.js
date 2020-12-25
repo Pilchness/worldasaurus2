@@ -17,6 +17,80 @@ const currentCountry = {
   currency: '',
   weather: {}
 };
+class DataFetcher {
+  constructor(type, api, query) {
+    this.api = api;
+    this.query = query;
+    this.type = type;
+  }
+
+  dataFetch = async (search) => {
+    return new Promise((resolve, reject) => {
+      $.ajax({
+        type: this.type,
+        url: 'libs/php/getNewData.php',
+        data: {
+          api: this.api,
+          query: this.query,
+          search: search
+        },
+        success: function (result) {
+          resolve(result.data);
+        },
+        error: function (error) {
+          reject(error);
+        }
+      });
+    });
+  };
+}
+
+const photos = new DataFetcher('POST', 'photos', 'all');
+const weather = new DataFetcher('POST', 'weather', 'all');
+const placeFromLatLng = new DataFetcher('POST', 'opencage', 'latlng');
+const restCountries = new DataFetcher('POST', 'rest', 'iso');
+const wikiCurrencyList = new DataFetcher('GET', 'wiki', 'currencyList');
+const wikiSearchArticles = new DataFetcher('POST', 'wiki', 'search');
+const wikiPageSummary = new DataFetcher('POST', 'wiki', 'summary');
+const cityData = new DataFetcher('POST', 'geonames', 'cities');
+const countryData = new DataFetcher('POST', 'geonames', 'id');
+const poiData = new DataFetcher('POST', 'geonames', 'poi');
+
+// cityData.dataFetch({ isoA2: 'GB', row: 1 }).then((result) => {
+//   console.log(result);
+// });
+
+// countryData.dataFetch('1324').then((result) => {
+//   console.log(result);
+// });
+
+// poiData.dataFetch({ isoA2: 'GB', class: 'H' }).then((result) => {
+//   console.log(result);
+// });
+
+photos.dataFetch('Paris').then((result) => {
+  console.log(result);
+});
+
+weather.dataFetch('Cardiff').then((result) => {
+  console.log(result);
+});
+
+placeFromLatLng.dataFetch({ latitude: 52.3555, longitude: 1.1743 }).then((result) => {
+  console.log(result);
+});
+
+// restCountries.dataFetch('GBR').then((result) => {
+//   console.log(result);
+// });
+
+wikiCurrencyList.dataFetch().then((result) => {
+  console.log(result.parse);
+});
+
+// currencyInfo.dataFetch('lira').then((result) => {
+//   console.log(result.query);
+// });
 
 const countryISOLookUp = {};
 let currentModal = '';
@@ -101,20 +175,20 @@ const addMarkerGroupToMap = async (markerData, icon) => {
           if (a[3] > 0) {
             $('#poi-pop').text(`Population: ${a[3]}`);
           }
-          getAdditionalGeodata(a[4]).then((result) => {
-            if (result.data.wikipediaURL) {
-              let wikiLink = result.data.wikipediaURL;
+          countryData.dataFetch(a[4]).then((result) => {
+            if (result.wikipediaURL) {
+              let wikiLink = result.wikipediaURL;
               $('#poi-name').html(`<a href='https://${wikiLink}' target='_blank'>${a[2]}</a>`);
               if (wikiLink) {
-                getWikiSummary(wikiLink.replace('en.wikipedia.org/wiki/', '')).then((result) => {
-                  if (result.data.originalimage) {
-                    $('#poi-image').attr('src', result.data.originalimage.source);
-                    $('#poi-image').attr('alt', result.data.title);
+                wikiPageSummary.dataFetch(wikiLink.replace('en.wikipedia.org/wiki/', '')).then((result) => {
+                  if (result.originalimage) {
+                    $('#poi-image').attr('src', result.originalimage.source);
+                    $('#poi-image').attr('alt', result.title);
                     $('#poi-image-link').attr('href', `https://${wikiLink}`);
                   }
 
-                  if (result.data.extract) {
-                    $('#poi-text').text(result.data.extract.substring(0, 300) + '..');
+                  if (result.extract) {
+                    $('#poi-text').text(result.extract.substring(0, 300) + '..');
                     $('#poi-link').html(
                       `<a style="font-size: 12px" href='https://${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
                     );
@@ -151,6 +225,11 @@ const getUserLatLonCoords = () => {
 
 const drawMapOutlineForCountry = (isoCode) => {
   layer.clearLayers();
+  $('#poi-image, #country-photo, #currency-image').attr(
+    'src',
+    'https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif'
+  );
+  $('#country-facts-list, #country-photo-info, #country-currency-list').empty();
   countryDataArray.forEach((country) => {
     if (country.properties.iso_a3 === isoCode) {
       currentCountry.geoData = country;
@@ -202,28 +281,18 @@ const getCountryDataFromLocalJSON = async () => {
   }
 };
 
-const getAdditionalCountryData = (ISOcode) => {
-  $.ajax({
-    type: 'POST',
-    url: 'libs/php/restCountries.php',
-    dataType: 'json',
-    data: { code: ISOcode },
-    success: function (response) {
-      console.log(response);
-      currentCountry.fullName = response.data.name;
-      currentCountry.borders = response.data.borders;
-      currentCountry.currency = response.data.currencies[0];
-      currentCountry.flagUrl = response.data.flag;
-      currentCountry.population = response.data.population;
-      currentCountry.region = response.data.region;
-      currentCountry.area = response.data.area;
-      currentCountry.capitalCity = response.data.capital;
-
-      drawMapPinsForCountry();
-    },
-    error: function (errorThrown) {
-      console.log(errorThrown);
-    }
+const getAdditionalCountryData = async (ISOcode) => {
+  restCountries.dataFetch(ISOcode).then((response) => {
+    console.log(response);
+    currentCountry.fullName = response.name;
+    currentCountry.borders = response.borders;
+    currentCountry.currency = response.currencies[0];
+    currentCountry.flagUrl = response.flag;
+    currentCountry.population = response.population;
+    currentCountry.region = response.region;
+    currentCountry.area = response.area;
+    currentCountry.capitalCity = response.capital;
+    drawMapPinsForCountry();
   });
 };
 
@@ -242,70 +311,82 @@ const populateSearchElementInNavigationBar = async (countryDataArray) => {
 
 getCountryDataFromLocalJSON();
 
-const getCityData = async (startRow) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/geoNames.php',
-      type: 'POST',
-      dataType: 'json',
-      data: {
-        query: 'cities',
-        isoA2: currentCountry.iso_a2,
-        start: startRow
-      },
-      success: function (result) {
-        resolve(result);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
+const displayCityMapPins = async (startRow) => {
+  cityData.dataFetch({ isoA2: currentCountry.iso_a2, row: startRow }).then((result) => {
+    console.log(result);
+    currentCountry.mapPins.cities = result.geonames;
+    addMarkerGroup('P', 'city', 'cities');
+    addMarkerGroup('AIRP', 'plane', 'cities');
   });
 };
 
-const getPoiData = async (category) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/geoNames.php',
-      type: 'POST',
-      dataType: 'json',
-      data: {
-        query: 'poi',
-        isoA2: currentCountry.iso_a2,
-        class: category
-      },
-      success: function (result) {
-        resolve(result);
-      },
-      error: function (error) {
-        reject(error);
-      }
+const displayPoiData = async () => {
+  poiData
+    .dataFetch({ isoA2: currentCountry.iso_a2, class: 'H' })
+    .then((result) => {
+      currentCountry.mapPins.geoH = result.geonames;
+      console.log(currentCountry.mapPins.geoH);
+      addMarkerGroup('LK', 'water', 'geoH');
+      addMarkerGroup('RSV', 'water', 'geoH');
+    })
+    .then(() => {
+      poiData.dataFetch({ isoA2: currentCountry.iso_a2, class: 'L' }).then((result) => {
+        currentCountry.mapPins.geoL = result.geonames;
+        addMarkerGroup('PRK', 'squirrel', 'geoL');
+        addMarkerGroup('RESW', 'squirrel', 'geoL');
+        addMarkerGroup('RESV', 'squirrel', 'geoL');
+        addMarkerGroup('PRT', 'ship', 'geoL');
+      });
+    })
+    .then(() => {
+      poiData.dataFetch({ isoA2: currentCountry.iso_a2, class: 'S' }).then((result) => {
+        currentCountry.mapPins.geoS = result.geonames;
+        addMarkerGroup('CH', 'church', 'geoS');
+        addMarkerGroup('CTRR', 'church', 'geoS');
+        addMarkerGroup('CMP', 'campground', 'geoS');
+        addMarkerGroup('CSTL', 'fort-awesome', 'geoS');
+        addMarkerGroup('FRM', 'tractor', 'geoS');
+        addMarkerGroup('GDN', 'flower-tulip', 'geoS');
+        addMarkerGroup('UNIV', 'university', 'geoS');
+      });
+    })
+    .then(() => {
+      poiData.dataFetch({ isoA2: currentCountry.iso_a2, class: 'T' }).then((result) => {
+        currentCountry.mapPins.geoT = result.geonames;
+        addMarkerGroup('BCH', 'umbrella-beach', 'geoT');
+        addMarkerGroup('DSRT', 'cactus', 'geoT');
+        addMarkerGroup('MT', 'mountains', 'geoT');
+      });
     });
-  });
 };
 
-const getAdditionalGeodata = async (geoId) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/geoNames.php',
-      type: 'POST',
-      dataType: 'json',
-      data: {
-        query: 'id',
-        id: geoId
-      },
-      success: function (result) {
-        resolve(result);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
-};
+// const getAdditionalGeodata = async (geoId) => {
+//   countryData.dataFetch(geoId).then((result) => {
+//     return result;
+//   });
+// };
+
+// const getAdditionalGeodata = async (geoId) => {
+//   return new Promise((resolve, reject) => {
+//     $.ajax({
+//       url: 'libs/php/geoNames.php',
+//       type: 'POST',
+//       dataType: 'json',
+//       data: {
+//         query: 'id',
+//         id: geoId
+//       },
+//       success: function (result) {
+//         resolve(result);
+//       },
+//       error: function (error) {
+//         reject(error);
+//       }
+//     });
+//   });
+// };
 
 const getWikiSummary = async (pageTitle) => {
-  console.log(pageTitle);
   return new Promise((resolve, reject) => {
     $.ajax({
       url: 'libs/php/wikiPreview.php',
@@ -373,6 +454,22 @@ const getCurrency = async () => {
   });
 };
 
+const getWeather = async (city) => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      type: 'POST',
+      url: 'libs/php/getWeatherData.php',
+      data: { city: city },
+      success: function (result) {
+        resolve(result.data);
+      },
+      error: function (error) {
+        reject(error);
+      }
+    });
+  });
+};
+
 const addMarkerGroup = (search, icon, dataLocation) => {
   addMarkerGroupToMap(
     currentCountry.mapPins[dataLocation].map((poi) => {
@@ -385,39 +482,8 @@ const addMarkerGroup = (search, icon, dataLocation) => {
 };
 
 const drawMapPinsForCountry = async () => {
-  getCityData(1).then((cities) => {
-    currentCountry.mapPins.cities = cities.data.geonames;
-    addMarkerGroup('P', 'city', 'cities');
-    addMarkerGroup('AIRP', 'plane', 'cities');
-  });
-  getPoiData('H').then((pois) => {
-    currentCountry.mapPins.geoH = pois.data.geonames;
-    addMarkerGroup('LK', 'water', 'geoH');
-    addMarkerGroup('RSV', 'water', 'geoH');
-  });
-  getPoiData('L').then((pois) => {
-    currentCountry.mapPins.geoL = pois.data.geonames;
-    addMarkerGroup('PRK', 'squirrel', 'geoL');
-    addMarkerGroup('RESW', 'squirrel', 'geoL');
-    addMarkerGroup('RESV', 'squirrel', 'geoL');
-    addMarkerGroup('PRT', 'ship', 'geoL');
-  });
-  getPoiData('S').then((pois) => {
-    currentCountry.mapPins.geoS = pois.data.geonames;
-    addMarkerGroup('CH', 'church', 'geoS');
-    addMarkerGroup('CTRR', 'church', 'geoS');
-    addMarkerGroup('CMP', 'campground', 'geoS');
-    addMarkerGroup('CSTL', 'fort-awesome', 'geoS');
-    addMarkerGroup('FRM', 'tractor', 'geoS');
-    addMarkerGroup('GDN', 'flower-tulip', 'geoS');
-    addMarkerGroup('UNIV', 'university', 'geoS');
-  });
-  getPoiData('T').then((pois) => {
-    currentCountry.mapPins.geoT = pois.data.geonames;
-    addMarkerGroup('BCH', 'umbrella-beach', 'geoT');
-    addMarkerGroup('DSRT', 'cactus', 'geoT');
-    addMarkerGroup('MT', 'mountains', 'geoT');
-  });
+  displayCityMapPins(1);
+  displayPoiData();
 };
 
 const handleNewCountryChosen = (isoCode) => {
@@ -450,7 +516,6 @@ const prepareCountryInfoModal = () => {
 };
 
 const displayPhotos = (result, photoNumber) => {
-  console.log(result[photoNumber]);
   $('#country-photo').attr('src', result[photoNumber].urls.small);
   $('#country-photo').attr('alt', result[photoNumber].alt_description);
   $('#country-photo-info').empty();
@@ -494,7 +559,6 @@ const prepareCountryImagesModal = async () => {
 
 const prepareCurrencyModal = async () => {
   getCurrency().then((result) => {
-    console.log(result);
     $('#country-currency-list').empty();
     $('#country-currency-list').append(`<li>Name: ${currentCountry.currency.name}</li>`);
     $('#country-currency-list').append(`<li>Symbol: ${currentCountry.currency.symbol}</li>`);
@@ -503,8 +567,6 @@ const prepareCurrencyModal = async () => {
       const wikiCurrencyData = currencyData.wikitext['*'];
       let currencyNameIndex = wikiCurrencyData.indexOf(currentCountry.currency.code);
       let currencyInfoString = wikiCurrencyData.slice(currencyNameIndex - 150, currencyNameIndex);
-      console.log(currencyInfoString);
-      console.log(currencyInfoString.lastIndexOf('[['));
       let wikiCurrencyTitle = currencyInfoString.slice(
         currencyInfoString.lastIndexOf('[[') + 2,
         currencyInfoString.lastIndexOf(']]')
@@ -514,7 +576,6 @@ const prepareCurrencyModal = async () => {
         wikiCurrencyTitle = wikiCurrencyTitle.slice(0, wikiCurrencyTitle.indexOf('|'));
       }
       getWikiSummary(wikiCurrencyTitle).then((wiki) => {
-        console.log(wiki);
         if (wiki.data) {
           let wikiLink = wiki.data.content_urls.desktop.page;
           if (wiki.data.originalimage) {
@@ -533,6 +594,52 @@ const prepareCurrencyModal = async () => {
       });
     });
     return result;
+  });
+};
+
+const prepareWeatherModal = () => {
+  getWeather(currentCountry.capitalCity).then((result) => {
+    console.log(result);
+    $('#country-weather-list').empty();
+    $('#weather-symbol').attr('src', result.current.weather_icons[0]);
+    $('#weather-symbol').attr('alt', result.current.weather_descriptions[0]);
+    $('#country-weather-list').append(`<li>Current weather in ${currentCountry.capitalCity}</li>`);
+    $('#country-weather-list').append(
+      `<li>Temperature: ${result.current.temperature}° (feels like ${result.current.feelslike}°)</li>`
+    );
+    $('#country-weather-list').append(`<li>Humidity: ${result.current.humidity}</li>`);
+    $('#country-weather-list').append(`<li>Precipitation: ${result.current.precip}</li>`);
+    $('#country-weather-list').append(`<li>Visibility: ${result.current.visibility}</li>`);
+    $('#country-weather-list').append(`<li>Cloud cover: ${result.current.cloudcover}</li>`);
+    $('#country-weather-list').append(`<li>Windspeed: ${result.current.wind_speed}</li>`);
+    $('#country-weather-list').append(`<li>Wind direction: ${result.current.wind_dir}</li>`);
+
+    getPhotos(`weather ${currentCountry.name} ${currentCountry.capitalCity}`).then((result) => {
+      console.log(result);
+      let randomImage = Math.floor(Math.random() * 10);
+      $('#weather-image').attr('src', result[randomImage].urls.small);
+      $('#weather-image').attr('alt', result[randomImage].alt_description);
+      $('#weather-image').on('click', function () {
+        if ($('#country-weather-list').is(':visible')) {
+          $('#country-weather-list').hide();
+          $('#weather-photo-info').empty();
+          $('#weather-photo-info').append(`<li>Description: ${result[randomImage].alt_description}</li>`);
+          $('#weather-photo-info').append(`<li>Photographer: ${result[randomImage].user.name}</li>`);
+          $('#weather-photo-info').append(
+            `<li>Date: ${new Date(result[randomImage].created_at).toString().slice(4, 15)}</li>`
+          );
+          if (result[randomImage].user.portfolio_url) {
+            $('#weather-photo-info').append(
+              `<li>Portfolio: <a href='${result[randomImage].user.portfolio_url}' target='_blank'>${result[randomImage].user.portfolio_url}</a></li>`
+            );
+          }
+          $('#weather-photo-info').show();
+        } else {
+          $('#country-weather-list').show();
+          $('#weather-photo-info').hide();
+        }
+      });
+    });
   });
 };
 
@@ -556,6 +663,7 @@ $(document).ready(function () {
     $('#country-currency-modal').toggle();
   });
   $('#country-weather-button, #close-country-weather').on('click', function () {
+    prepareWeatherModal();
     $('#country-weather-modal').toggle();
   });
   $('#settings-button, #close-settings').on('click', function () {
