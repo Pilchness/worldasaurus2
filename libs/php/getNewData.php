@@ -11,6 +11,10 @@ switch($_REQUEST['api']) {
             $url = 'http://api.weatherstack.com/current?access_key=4183de8b2d6245372e8faef0d3edb91d&query=' . $_REQUEST['search'];
             break;
 
+      case 'currency':
+            $url = 'https://free.currconv.com/api/v7/convert?q=USD_' . $_REQUEST['search'] . '&compact=ultra&apiKey=7cb4ce36c6434d315c08';
+            break;
+
       case 'opencage':
              $url = 'https://api.opencagedata.com/geocode/v1/json?q=' . $_REQUEST['search']['latitude'] . '+' . $_REQUEST['search']['longitude'] . '&key=e6653782923143fba432e00a48a0f2fa';
              break;
@@ -37,14 +41,6 @@ switch($_REQUEST['api']) {
             }
             break;
 
-
-
-
-
-//             $url = ($_REQUEST['query'] === 'currencyList' ? 'https://en.wikipedia.org/w/api.php?action=parse&format=json&page=List_of_circulating_currencies&section=2&prop=wikitext'
-// : 'https://en.wikipedia.org/w/api.php?&action=query&list=search&srsearch=' . $_REQUEST['search'] . '&format=json');
-//             break;
-
       case 'geonames':
             switch($_REQUEST['query']) {
                   case 'cities':
@@ -66,19 +62,6 @@ switch($_REQUEST['api']) {
       default: $url = '';
           
 }
-
-
-// if($_REQUEST['api'] === 'photos') {
-//       $url = 'https://api.unsplash.com/search/photos?query=' . $_REQUEST['search'] . '&client_id=N9abUZxruGdM6PgpyQKXGJnYqq4I3vkcnx2-JcTNcyc&page=1&orientation=landscape';
-// } else if($_REQUEST['api'] === 'weather') {
-//       $url = 'http://api.weatherstack.com/current?access_key=4183de8b2d6245372e8faef0d3edb91d&query=' . $_REQUEST['search'];
-// } else if($_REQUEST['api'] === 'opencage') {
-//       $url =
-//   'https://api.opencagedata.com/geocode/v1/json?q=' .
-//   $_REQUEST['search']['latitude'] . '+' . $_REQUEST['search']['longitude'] . '&key=e6653782923143fba432e00a48a0f2fa';
-// } else if($_REQUEST['api'] === 'rest' && $_REQUEST['query'] === 'iso') {
-//       $url = 'https://restcountries.eu/rest/v2/alpha/' . $_REQUEST['search'];
-// }
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);

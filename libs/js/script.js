@@ -1,4 +1,6 @@
 let countryDataArray = [];
+let outlineColor = '#00ff00';
+let mapFlySpeed = 10;
 
 const currentCountry = {
   iso_a3: '',
@@ -47,6 +49,7 @@ class DataFetcher {
 
 const photos = new DataFetcher('POST', 'photos', 'all');
 const weather = new DataFetcher('POST', 'weather', 'all');
+const currency = new DataFetcher('POST', 'currency', 'search');
 const placeFromLatLng = new DataFetcher('POST', 'opencage', 'latlng');
 const restCountries = new DataFetcher('POST', 'rest', 'iso');
 const wikiCurrencyList = new DataFetcher('GET', 'wiki', 'currencyList');
@@ -55,42 +58,6 @@ const wikiPageSummary = new DataFetcher('POST', 'wiki', 'summary');
 const cityData = new DataFetcher('POST', 'geonames', 'cities');
 const countryData = new DataFetcher('POST', 'geonames', 'id');
 const poiData = new DataFetcher('POST', 'geonames', 'poi');
-
-// cityData.dataFetch({ isoA2: 'GB', row: 1 }).then((result) => {
-//   console.log(result);
-// });
-
-// countryData.dataFetch('1324').then((result) => {
-//   console.log(result);
-// });
-
-// poiData.dataFetch({ isoA2: 'GB', class: 'H' }).then((result) => {
-//   console.log(result);
-// });
-
-photos.dataFetch('Paris').then((result) => {
-  console.log(result);
-});
-
-weather.dataFetch('Cardiff').then((result) => {
-  console.log(result);
-});
-
-placeFromLatLng.dataFetch({ latitude: 52.3555, longitude: 1.1743 }).then((result) => {
-  console.log(result);
-});
-
-// restCountries.dataFetch('GBR').then((result) => {
-//   console.log(result);
-// });
-
-wikiCurrencyList.dataFetch().then((result) => {
-  console.log(result.parse);
-});
-
-// currencyInfo.dataFetch('lira').then((result) => {
-//   console.log(result.query);
-// });
 
 const countryISOLookUp = {};
 let currentModal = '';
@@ -237,30 +204,23 @@ const drawMapOutlineForCountry = (isoCode) => {
       currentCountry.iso_a2 = country.properties.iso_a2;
       currentCountry.iso_a3 = isoCode;
       getAdditionalCountryData(isoCode);
-      const countryOutline = layer.addData(country, { style: { color: '#ff0000', weight: 10, opacity: 0.65 } });
+      const countryOutline = layer.addData(country, { style: { color: outlineColor, weight: 4, opacity: 0.65 } });
       const countryBounds = countryOutline.getBounds();
       map.flyToBounds(countryBounds, 14, {
         animate: true,
-        duration: 3
+        duration: mapFlySpeed
       });
     }
   });
 };
 
 const identifyCountry = (position) => {
-  return $.ajax({
-    type: 'POST',
-    url: 'libs/php/getPlaceFromLatLong.php',
-    dataType: 'json',
-    data: { latitude: position.coords.latitude, longitude: position.coords.longitude },
-    success: function (response) {
-      let currentCountryISOCode = response.data.results[0].components['ISO_3166-1_alpha-3'];
+  placeFromLatLng
+    .dataFetch({ latitude: position.coords.latitude, longitude: position.coords.longitude })
+    .then((response) => {
+      let currentCountryISOCode = response.results[0].components['ISO_3166-1_alpha-3'];
       handleNewCountryChosen(currentCountryISOCode);
-    },
-    error: function (errorThrown) {
-      console.log(errorThrown);
-    }
-  });
+    });
 };
 
 getUserLatLonCoords();
@@ -283,7 +243,6 @@ const getCountryDataFromLocalJSON = async () => {
 
 const getAdditionalCountryData = async (ISOcode) => {
   restCountries.dataFetch(ISOcode).then((response) => {
-    console.log(response);
     currentCountry.fullName = response.name;
     currentCountry.borders = response.borders;
     currentCountry.currency = response.currencies[0];
@@ -313,7 +272,6 @@ getCountryDataFromLocalJSON();
 
 const displayCityMapPins = async (startRow) => {
   cityData.dataFetch({ isoA2: currentCountry.iso_a2, row: startRow }).then((result) => {
-    console.log(result);
     currentCountry.mapPins.cities = result.geonames;
     addMarkerGroup('P', 'city', 'cities');
     addMarkerGroup('AIRP', 'plane', 'cities');
@@ -325,7 +283,6 @@ const displayPoiData = async () => {
     .dataFetch({ isoA2: currentCountry.iso_a2, class: 'H' })
     .then((result) => {
       currentCountry.mapPins.geoH = result.geonames;
-      console.log(currentCountry.mapPins.geoH);
       addMarkerGroup('LK', 'water', 'geoH');
       addMarkerGroup('RSV', 'water', 'geoH');
     })
@@ -358,116 +315,6 @@ const displayPoiData = async () => {
         addMarkerGroup('MT', 'mountains', 'geoT');
       });
     });
-};
-
-// const getAdditionalGeodata = async (geoId) => {
-//   countryData.dataFetch(geoId).then((result) => {
-//     return result;
-//   });
-// };
-
-// const getAdditionalGeodata = async (geoId) => {
-//   return new Promise((resolve, reject) => {
-//     $.ajax({
-//       url: 'libs/php/geoNames.php',
-//       type: 'POST',
-//       dataType: 'json',
-//       data: {
-//         query: 'id',
-//         id: geoId
-//       },
-//       success: function (result) {
-//         resolve(result);
-//       },
-//       error: function (error) {
-//         reject(error);
-//       }
-//     });
-//   });
-// };
-
-const getWikiSummary = async (pageTitle) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/wikiPreview.php',
-      type: 'POST',
-      dataType: 'json',
-      data: {
-        pageTitle: pageTitle
-      },
-      success: function (result) {
-        resolve(result);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
-};
-
-const getWikiCurrencies = async () => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/wikiCurrencies.php',
-      type: 'GET',
-      success: function (result) {
-        resolve(result);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
-};
-
-const getPhotos = async (searchWord) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: 'libs/php/imageSearch.php',
-      type: 'POST',
-      dataType: 'json',
-      data: {
-        searchWord: searchWord.replace(/\s/g, '&') //change spaces to &
-      },
-      success: function (result) {
-        resolve(result.data);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
-};
-
-const getCurrency = async () => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      type: 'POST',
-      url: 'libs/php/getCurrencyData.php',
-      success: function (result) {
-        resolve(result.data);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
-};
-
-const getWeather = async (city) => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      type: 'POST',
-      url: 'libs/php/getWeatherData.php',
-      data: { city: city },
-      success: function (result) {
-        resolve(result.data);
-      },
-      error: function (error) {
-        reject(error);
-      }
-    });
-  });
 };
 
 const addMarkerGroup = (search, icon, dataLocation) => {
@@ -530,10 +377,11 @@ const displayPhotos = (result, photoNumber) => {
 };
 
 const prepareCountryImagesModal = async () => {
-  getPhotos(currentCountry.name).then((result) => {
+  photos.dataFetch(currentCountry.name.replace(/\s/g, '&')).then((response) => {
     let photoNumber = 0;
+    let photoList = response.results;
     $('#photo-left').css('visibility', 'hidden');
-    displayPhotos(result, photoNumber);
+    displayPhotos(photoList, photoNumber);
 
     $('#photo-left').on('click', function () {
       $('#photo-right').css('visibility', 'visible');
@@ -543,28 +391,30 @@ const prepareCountryImagesModal = async () => {
         photoNumber = 0;
         $('#photo-left').css('visibility', 'hidden');
       }
-      displayPhotos(result, photoNumber);
+      displayPhotos(photoList, photoNumber);
     });
     $('#photo-right').on('click', function () {
       $('#photo-left').css('visibility', 'visible');
       photoNumber++;
-      if (photoNumber >= result.length - 1) {
-        photoNumber = result.length - 1;
+      if (photoNumber >= photoList.length - 1) {
+        photoNumber = photoList.length - 1;
         $('#photo-right').css('visibility', 'hidden');
       }
-      displayPhotos(result, photoNumber);
+      displayPhotos(photoList, photoNumber);
     });
   });
 };
 
 const prepareCurrencyModal = async () => {
-  getCurrency().then((result) => {
+  currency.dataFetch(currentCountry.currency.code).then((result) => {
+    console.log(result);
+    let exchangeRate = result[Object.keys(result)[0]];
     $('#country-currency-list').empty();
     $('#country-currency-list').append(`<li>Name: ${currentCountry.currency.name}</li>`);
     $('#country-currency-list').append(`<li>Symbol: ${currentCountry.currency.symbol}</li>`);
-    $('#country-currency-list').append(`<li>Exchange Rate ($): ${result[currentCountry.currency.code]}</li>`);
-    getWikiCurrencies().then((currencyData) => {
-      const wikiCurrencyData = currencyData.wikitext['*'];
+    $('#country-currency-list').append(`<li>Exchange Rate ($): ${exchangeRate}</li>`);
+    wikiCurrencyList.dataFetch().then((currencyData) => {
+      const wikiCurrencyData = currencyData.parse.wikitext['*'];
       let currencyNameIndex = wikiCurrencyData.indexOf(currentCountry.currency.code);
       let currencyInfoString = wikiCurrencyData.slice(currencyNameIndex - 150, currencyNameIndex);
       let wikiCurrencyTitle = currencyInfoString.slice(
@@ -575,17 +425,20 @@ const prepareCurrencyModal = async () => {
       if (wikiCurrencyTitle.indexOf('|') !== -1) {
         wikiCurrencyTitle = wikiCurrencyTitle.slice(0, wikiCurrencyTitle.indexOf('|'));
       }
-      getWikiSummary(wikiCurrencyTitle).then((wiki) => {
-        if (wiki.data) {
-          let wikiLink = wiki.data.content_urls.desktop.page;
-          if (wiki.data.originalimage) {
-            $('#currency-image').attr('src', wiki.data.originalimage.source);
-            $('#currency-image').attr('alt', wiki.data.title);
+      wikiPageSummary.dataFetch(wikiCurrencyTitle).then((wiki) => {
+        if (wiki) {
+          let wikiLink = wiki.content_urls.desktop.page;
+          if (wiki.originalimage) {
+            $('#currency-image').attr('src', wiki.originalimage.source);
+            $('#currency-image').attr('alt', wiki.title);
             $('#currency-image-link').attr('href', wikiLink);
+          } else {
+            $('#currency-image').removeAttr('src');
+            $('#currency-image').removeAttr('alt');
           }
 
-          if (wiki.data.extract) {
-            $('#currency-text').text(wiki.data.extract.substring(0, 400) + '..');
+          if (wiki.extract) {
+            $('#currency-text').text(wiki.extract.substring(0, 400) + '..');
             $('#currency-link').html(
               `<a style="font-size: 12px" href='${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
             );
@@ -598,8 +451,7 @@ const prepareCurrencyModal = async () => {
 };
 
 const prepareWeatherModal = () => {
-  getWeather(currentCountry.capitalCity).then((result) => {
-    console.log(result);
+  weather.dataFetch(currentCountry.capitalCity).then((result) => {
     $('#country-weather-list').empty();
     $('#weather-symbol').attr('src', result.current.weather_icons[0]);
     $('#weather-symbol').attr('alt', result.current.weather_descriptions[0]);
@@ -614,32 +466,32 @@ const prepareWeatherModal = () => {
     $('#country-weather-list').append(`<li>Windspeed: ${result.current.wind_speed}</li>`);
     $('#country-weather-list').append(`<li>Wind direction: ${result.current.wind_dir}</li>`);
 
-    getPhotos(`weather ${currentCountry.name} ${currentCountry.capitalCity}`).then((result) => {
-      console.log(result);
-      let randomImage = Math.floor(Math.random() * 10);
-      $('#weather-image').attr('src', result[randomImage].urls.small);
-      $('#weather-image').attr('alt', result[randomImage].alt_description);
-      $('#weather-image').on('click', function () {
-        if ($('#country-weather-list').is(':visible')) {
-          $('#country-weather-list').hide();
-          $('#weather-photo-info').empty();
-          $('#weather-photo-info').append(`<li>Description: ${result[randomImage].alt_description}</li>`);
-          $('#weather-photo-info').append(`<li>Photographer: ${result[randomImage].user.name}</li>`);
-          $('#weather-photo-info').append(
-            `<li>Date: ${new Date(result[randomImage].created_at).toString().slice(4, 15)}</li>`
-          );
-          if (result[randomImage].user.portfolio_url) {
-            $('#weather-photo-info').append(
-              `<li>Portfolio: <a href='${result[randomImage].user.portfolio_url}' target='_blank'>${result[randomImage].user.portfolio_url}</a></li>`
-            );
+    photos
+      .dataFetch(`weather ${currentCountry.name} ${currentCountry.capitalCity}`.replace(/\s/g, '&')) //replace any spaces with &
+      .then((response) => {
+        let randomImage = Math.floor(Math.random() * 10);
+        let imageData = response.results[randomImage];
+        $('#weather-image').attr('src', imageData.urls.small);
+        $('#weather-image').attr('alt', imageData.alt_description);
+        $('#weather-image').on('click', function () {
+          if ($('#country-weather-list').is(':visible')) {
+            $('#country-weather-list').hide();
+            $('#weather-photo-info').empty();
+            $('#weather-photo-info').append(`<li>Description: ${imageData.alt_description}</li>`);
+            $('#weather-photo-info').append(`<li>Photographer: ${imageData.user.name}</li>`);
+            $('#weather-photo-info').append(`<li>Date: ${new Date(imageData.created_at).toString().slice(4, 15)}</li>`);
+            if (imageData.user.portfolio_url) {
+              $('#weather-photo-info').append(
+                `<li>Portfolio: <a href='${imageData.user.portfolio_url}' target='_blank'>${imageData.user.portfolio_url}</a></li>`
+              );
+            }
+            $('#weather-photo-info').show();
+          } else {
+            $('#country-weather-list').show();
+            $('#weather-photo-info').hide();
           }
-          $('#weather-photo-info').show();
-        } else {
-          $('#country-weather-list').show();
-          $('#weather-photo-info').hide();
-        }
+        });
       });
-    });
   });
 };
 
@@ -669,8 +521,4 @@ $(document).ready(function () {
   $('#settings-button, #close-settings').on('click', function () {
     $('#settings-modal').toggle();
   });
-
-  // $('#close-side-info').on('click', function () {
-  //   $('#info-modal').hide();
-  // });
 });
