@@ -1,6 +1,17 @@
 let countryDataArray = [];
 let outlineColor = '#00ff00';
-let mapFlySpeed = 10;
+function countryOutlineStyle() {
+  return {
+    fillColor: outlineColor,
+    weight: 2,
+    opacity: 1,
+    color: 'black',
+    //dashArray: '3',
+    fillOpacity: 0.2
+  };
+}
+let mapFlySpeed = 0.1;
+let mapZoomSpeed = 1;
 
 const currentCountry = {
   iso_a3: '',
@@ -63,14 +74,14 @@ const countryISOLookUp = {};
 let currentModal = '';
 
 //initiate Leaflet map
-const map = L.map('mapid', { zoomControl: false }).setView([51.505, -0.09], 5);
+const map = L.map('mapid', { zoomControl: false, zoomSnap: 0, minZoom: 2.1 }).setView([51.505, -0.09], 5);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution:
     '<span style="font-size: 7px">Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community</span>'
 }).addTo(map);
 
 //initiate layers and markers
-const layer = L.geoJSON().addTo(map);
+let countryOutline = L.geoJSON().addTo(map);
 const markers = L.markerClusterGroup();
 map.addLayer(markers);
 
@@ -101,6 +112,14 @@ const buttons = [
   L.easyButton({
     id: 'settings-button',
     states: [{ icon: 'fa-cog' }]
+  }),
+  L.easyButton({
+    id: 'zoom-in-button',
+    states: [{ icon: 'fa-search-plus' }]
+  }),
+  L.easyButton({
+    id: 'zoom-out-button',
+    states: [{ icon: 'fa-search-minus' }]
   })
 ];
 
@@ -126,7 +145,7 @@ const addMarkerGroupToMap = async (markerData, icon) => {
         lastClick = thisClick;
         e.originalEvent.stopPropagation();
 
-        if (clickDiff < 1000) {
+        if (clickDiff > 100) {
           $('#poi-image').removeAttr('src');
           $('#poi-image').attr('alt', '');
           $('#poi-link').empty();
@@ -148,22 +167,25 @@ const addMarkerGroupToMap = async (markerData, icon) => {
               $('#poi-name').html(`<a href='https://${wikiLink}' target='_blank'>${a[2]}</a>`);
               if (wikiLink) {
                 wikiPageSummary.dataFetch(wikiLink.replace('en.wikipedia.org/wiki/', '')).then((result) => {
-                  if (result.originalimage) {
-                    $('#poi-image').attr('src', result.originalimage.source);
-                    $('#poi-image').attr('alt', result.title);
-                    $('#poi-image-link').attr('href', `https://${wikiLink}`);
-                  }
+                  if (result) {
+                    if (result.originalimage) {
+                      $('#poi-image').attr('src', result.originalimage.source);
+                      $('#poi-image').attr('alt', result.title);
+                      $('#poi-image-link').attr('href', `https://${wikiLink}`);
+                    }
 
-                  if (result.extract) {
-                    $('#poi-text').text(result.extract.substring(0, 300) + '..');
-                    $('#poi-link').html(
-                      `<a style="font-size: 12px" href='https://${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
-                    );
+                    if (result.extract) {
+                      $('#poi-text').text(result.extract.substring(0, 300) + '..');
+                      $('#poi-link').html(
+                        `<a style="font-size: 12px" href='https://${wikiLink}' target='_blank'>Open Full Wikipedia Article (new tab)</a>`
+                      );
+                    }
                   }
                 });
               }
             }
-            $('#map-pin-modal').toggle();
+            $('#map-pin-modal').show();
+            $('#click-background').css('visibility', 'visible');
           });
         }
       });
@@ -191,7 +213,7 @@ const getUserLatLonCoords = () => {
 };
 
 const drawMapOutlineForCountry = (isoCode) => {
-  layer.clearLayers();
+  countryOutline.clearLayers();
   $('#poi-image, #country-photo, #currency-image').attr(
     'src',
     'https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif'
@@ -204,12 +226,24 @@ const drawMapOutlineForCountry = (isoCode) => {
       currentCountry.iso_a2 = country.properties.iso_a2;
       currentCountry.iso_a3 = isoCode;
       getAdditionalCountryData(isoCode);
-      const countryOutline = layer.addData(country, { style: { color: outlineColor, weight: 4, opacity: 0.65 } });
-      const countryBounds = countryOutline.getBounds();
-      map.flyToBounds(countryBounds, 14, {
+      countryOutline = L.geoJson(country, { style: countryOutlineStyle }).addTo(map);
+      let countryBounds = countryOutline.getBounds();
+      let neLatLng = countryBounds._northEast;
+      let swLatLng = countryBounds._southWest;
+      let latDifference = neLatLng.lat - swLatLng.lat;
+      let lngDifference = neLatLng.lng - swLatLng.lng;
+      let newNELat = neLatLng.lat + latDifference * (90 / (screen.height - 150));
+      let newNELng = neLatLng.lng + lngDifference * (50 / (screen.width + 400));
+      let newSWLat = swLatLng.lat - latDifference * (90 / (screen.height + 300));
+      let newSWLng = swLatLng.lng - lngDifference * (50 / (screen.width - 120));
+      countryBounds._northEast = { lat: newNELat, lng: newNELng };
+      countryBounds._southWest = { lat: newSWLat, lng: newSWLng };
+
+      map.flyToBounds(countryBounds, 0, {
         animate: true,
         duration: mapFlySpeed
       });
+      $('#country-selector').val(currentCountry.iso_a3);
     }
   });
 };
@@ -411,7 +445,6 @@ const prepareCountryImagesModal = async () => {
 
 const prepareCurrencyModal = async () => {
   currency.dataFetch(currentCountry.currency.code).then((result) => {
-    console.log(result);
     let exchangeRate = result[Object.keys(result)[0]];
     $('#country-currency-list').empty();
     $('#country-currency-list').append(`<li>Name: ${currentCountry.currency.name}</li>`);
@@ -428,6 +461,9 @@ const prepareCurrencyModal = async () => {
       wikiCurrencyTitle = wikiCurrencyTitle.split(' ').join('_');
       if (wikiCurrencyTitle.indexOf('|') !== -1) {
         wikiCurrencyTitle = wikiCurrencyTitle.slice(0, wikiCurrencyTitle.indexOf('|'));
+      }
+      if (currentCountry.iso_a3 === 'GBR') {
+        wikiCurrencyTitle = 'Pound_sterling';
       }
       wikiPageSummary.dataFetch(wikiCurrencyTitle).then((wiki) => {
         if (wiki) {
@@ -509,20 +545,47 @@ $(document).ready(function () {
   $('#country-info-button, #close-country-info').on('click', function () {
     prepareCountryInfoModal();
     $('#country-info-modal').toggle();
+    $('#click-background').css('visibility', 'visible');
   });
   $('#country-images-button, #close-country-images').on('click', function () {
     prepareCountryImagesModal();
     $('#country-images-modal').toggle();
+    $('#click-background').css('visibility', 'visible');
   });
   $('#country-currency-button, #close-country-currency').on('click', function () {
     prepareCurrencyModal();
     $('#country-currency-modal').toggle();
+    $('#click-background').css('visibility', 'visible');
   });
   $('#country-weather-button, #close-country-weather').on('click', function () {
     prepareWeatherModal();
     $('#country-weather-modal').toggle();
+    $('#click-background').css('visibility', 'visible');
   });
   $('#settings-button, #close-settings').on('click', function () {
     $('#settings-modal').toggle();
+    $('#click-background').css('visibility', 'visible');
+  });
+  $('#zoom-in-button').on('click', function () {
+    map.flyTo(map.getCenter(), map.getZoom() + 0.5, {
+      animate: true,
+      duration: mapZoomSpeed
+    });
+  });
+  $('#zoom-out-button').on('click', function () {
+    map.flyTo(map.getCenter(), map.getZoom() - 0.5, {
+      animate: true,
+      duration: mapZoomSpeed
+    });
+  });
+  $('#click-background').on('click', function () {
+    console.log('clicked');
+    $('#map-pin-modal').hide();
+    $('#country-info-modal').hide();
+    $('#country-images-modal').hide();
+    $('#country-currency-modal').hide();
+    $('#country-weather-modal').hide();
+    $('#settings-modal').hide();
+    $('#click-background').css('visibility', 'hidden');
   });
 });
