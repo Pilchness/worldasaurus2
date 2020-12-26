@@ -339,9 +339,13 @@ const handleNewCountryChosen = (isoCode) => {
 
 const borderingCountries = () => {
   let borderText = '';
-  currentCountry.borders.forEach((border) => {
-    borderText += `<span id='${border}' class='border-list-item'>${countryISOLookUp[border]}</span>, `;
-  });
+  if (currentCountry.borders.length < 1) {
+    borderText = 'none  ';
+  } else {
+    currentCountry.borders.forEach((border) => {
+      borderText += `<span id='${border}' class='border-list-item'>${countryISOLookUp[border]}</span>, `;
+    });
+  }
 
   return borderText.slice(0, -2);
 };
@@ -455,7 +459,7 @@ const prepareWeatherModal = () => {
     $('#country-weather-list').empty();
     $('#weather-symbol').attr('src', result.current.weather_icons[0]);
     $('#weather-symbol').attr('alt', result.current.weather_descriptions[0]);
-    $('#country-weather-list').append(`<li>Current weather in ${currentCountry.capitalCity}</li>`);
+    $('#country-weather-list').append(`<li>Current weather in ${currentCountry.capitalCity}:</li>`);
     $('#country-weather-list').append(
       `<li>Temperature: ${result.current.temperature}° (feels like ${result.current.feelslike}°)</li>`
     );
