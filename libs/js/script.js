@@ -1,17 +1,30 @@
 let countryDataArray = [];
-let outlineColor = '#00ff00';
+let outlineColor = '#9ac8eb';
+let fillOpacity = 0.4;
+let currentLayer;
+let currentView;
 function countryOutlineStyle() {
   return {
     fillColor: outlineColor,
     weight: 2,
     opacity: 1,
     color: 'black',
-    //dashArray: '3',
-    fillOpacity: 0.2
+    fillOpacity: fillOpacity
   };
 }
 let mapFlySpeed = 0.1;
 let mapZoomSpeed = 1;
+
+//preloader
+$(window).on('load', function () {
+  if ($('#preloader').length) {
+    $('#preloader')
+      .delay(100)
+      .fadeOut('slow', function () {
+        $(this).remove();
+      });
+  }
+});
 
 const currentCountry = {
   iso_a3: '',
@@ -42,6 +55,7 @@ class DataFetcher {
       $.ajax({
         type: this.type,
         url: 'libs/php/getNewData.php',
+        dataType: 'json',
         data: {
           api: this.api,
           query: this.query,
@@ -74,15 +88,101 @@ const countryISOLookUp = {};
 let currentModal = '';
 
 //initiate Leaflet map
+const arc = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {
+      attribution:
+        '<span class="attribution">Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community</span>'
+    }
+  ).addTo(map);
+};
+
 const map = L.map('mapid', { zoomControl: false, zoomSnap: 0, minZoom: 2.1 }).setView([51.505, -0.09], 5);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution:
-    '<span style="font-size: 7px">Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community</span>'
-}).addTo(map);
+arc(); //default map style
+currentView = map.getBounds();
+
+const stadia = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20,
+    attribution:
+      '<span class="attribution">&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors</span>'
+  }).addTo(map);
+};
+
+const carto = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+    attribution:
+      '<span class="attribution">&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a></span>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+};
+
+const esri = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
+    {
+      attribution: '<span class="attribution">Tiles &copy; Esri &mdash; Source: US National Park Service</span>',
+      maxZoom: 8
+    }
+  ).addTo(map);
+};
+
+const usgs = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer(
+    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+    {
+      maxZoom: 20,
+      attribution:
+        '<span class="attribution">Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a></span>'
+    }
+  ).addTo(map);
+};
+
+const gibs = () => {
+  if (currentLayer) {
+    currentLayer.remove();
+  }
+  currentLayer = L.tileLayer(
+    'https://map1.vis.earthdata.nasa.gov/wmts-webmerc/VIIRS_CityLights_2012/default/{time}/{tilematrixset}{maxZoom}/{z}/{y}/{x}.{format}',
+    {
+      attribution:
+        '<span class="attribution">Imagery provided by services from the Global Imagery Browse Services (GIBS), operated by the NASA/GSFC/Earth Science Data and Information System (<a href="https://earthdata.nasa.gov">ESDIS</a>) with funding provided by NASA/HQ.</span>',
+      bounds: [
+        [-85.0511287776, -179.999999975],
+        [85.0511287776, 179.999999975]
+      ],
+      minZoom: 1,
+      maxZoom: 8,
+      format: 'jpg',
+      time: '',
+      tilematrixset: 'GoogleMapsCompatible_Level'
+    }
+  ).addTo(map);
+};
 
 //initiate layers and markers
 let countryOutline = L.geoJSON().addTo(map);
-const markers = L.markerClusterGroup();
+const markers = L.markerClusterGroup({
+  spiderfyOnMaxZoom: false,
+  showCoverageOnHover: false
+});
 map.addLayer(markers);
 
 // Create additional Control placeholders
@@ -172,7 +272,7 @@ const addMarkerGroupToMap = async (markerData, icon) => {
                       $('#poi-image').attr('src', result.originalimage.source);
                       $('#poi-image').attr('alt', result.title);
                       $('#poi-image-link').attr('href', `https://${wikiLink}`);
-                    }
+                    } else $('#poi-image-link').removeAttr('href');
 
                     if (result.extract) {
                       $('#poi-text').text(result.extract.substring(0, 300) + '..');
@@ -194,17 +294,6 @@ const addMarkerGroupToMap = async (markerData, icon) => {
     }
   }
 };
-
-//preloader
-$(window).on('load', function () {
-  if ($('#preloader').length) {
-    $('#preloader')
-      .delay(100)
-      .fadeOut('slow', function () {
-        $(this).remove();
-      });
-  }
-});
 
 const getUserLatLonCoords = () => {
   if (navigator.geolocation) {
@@ -246,6 +335,7 @@ const drawMapOutlineForCountry = (isoCode) => {
       $('#country-selector').val(currentCountry.iso_a3);
     }
   });
+  currentView = map.getBounds();
 };
 
 const identifyCountry = (position) => {
@@ -264,8 +354,7 @@ const getCountryDataFromLocalJSON = async () => {
     await $.ajax({
       type: 'POST',
       url: 'libs/php/localGeodata.php',
-      dataType: 'json',
-      data: { action: 'all' }
+      dataType: 'json'
     }).then((countryObjectArray) => {
       countryDataArray = countryObjectArray.geoData.features;
       populateSearchElementInNavigationBar(countryDataArray);
@@ -421,7 +510,8 @@ const prepareCountryImagesModal = async () => {
     $('#photo-left').css('visibility', 'hidden');
     displayPhotos(photoList, photoNumber);
 
-    $('#photo-left').on('click', function () {
+    $('#photo-left').on('click', function (e) {
+      e.stopPropagation();
       $('#photo-right').css('visibility', 'visible');
 
       photoNumber--;
@@ -579,7 +669,6 @@ $(document).ready(function () {
     });
   });
   $('#click-background').on('click', function () {
-    console.log('clicked');
     $('#map-pin-modal').hide();
     $('#country-info-modal').hide();
     $('#country-images-modal').hide();
@@ -587,5 +676,50 @@ $(document).ready(function () {
     $('#country-weather-modal').hide();
     $('#settings-modal').hide();
     $('#click-background').css('visibility', 'hidden');
+  });
+
+  const mapColors = ['#9ac8eb', '#f4cfdf', '#f7f6cf', '#ccd4bf', '#e7cba9', '#beb4c5', '#e6a57e', '#98d4bb'];
+  const mapStyles = ['arc', 'carto', 'esri', 'gibs', 'stadia', 'usgs'];
+
+  mapColors.forEach((color) => {
+    $('#color-selector').append(
+      `<div id="${color}"  class="swatch" style="width: 25px; height: 25px; background-color: ${color}"></div>`
+    );
+  });
+
+  mapStyles.forEach((style) => {
+    $('#style-selector').append(
+      `<div
+        id="${style}"
+        class="mapstyle"
+        style="width: 33px; height: 33px; background-image: url('./images/${style}button.png'); background-size: contain"
+      ></div>`
+    );
+  });
+
+  $('.swatch').on('click', function (e) {
+    outlineColor = e.target.id;
+    $('.slider').append(`<style>.slider::-webkit-slider-thumb{background: ${outlineColor}}</style>`);
+    $('.slider').append(`<style>.slider::-moz-range-thumb{background: ${outlineColor}}</style>`);
+    drawMapOutlineForCountry(currentCountry.iso_a3);
+    markers.clearLayers();
+    map.flyToBounds(currentView);
+  });
+
+  $('.mapstyle').on('click', function (e) {
+    let mapStyle = e.target.id;
+    eval(mapStyle)();
+    drawMapOutlineForCountry(currentCountry.iso_a3);
+    markers.clearLayers();
+    map.flyToBounds(currentView);
+  });
+
+  $('#outline-alpha').on('change', function (e) {
+    fillOpacity = e.target.value / 10;
+    $('.slider').append(`<style>.slider::-webkit-slider-thumb{opacity: ${fillOpacity}}</style>`);
+    $('.slider').append(`<style>.slider::-moz-range-thumb{opacity: ${fillOpacity}}</style>`);
+    drawMapOutlineForCountry(currentCountry.iso_a3);
+    markers.clearLayers();
+    map.flyToBounds(currentView);
   });
 });

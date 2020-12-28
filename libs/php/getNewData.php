@@ -3,6 +3,7 @@
 $executionStartTime = microtime(true) / 1000;
 
 switch($_REQUEST['api']) {
+
       case 'photos':
             $url = 'https://api.unsplash.com/search/photos?query=' . $_REQUEST['search'] . '&client_id=N9abUZxruGdM6PgpyQKXGJnYqq4I3vkcnx2-JcTNcyc&page=1&orientation=landscape';
             break;

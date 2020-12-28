@@ -1,123 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <!-- JQuery UI CSS -->
-    <link
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+		<!-- JQuery UI CSS -->
+		<link
       rel="stylesheet"
       href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css"
     />
-    <!-- Bootstrap CSS -->
-    <link
+		<!-- Bootstrap CSS -->
+		<link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
       integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2"
       crossorigin="anonymous"
     />
-    <!-- Leaflet CSS -->
-    <link
+		<!-- Leaflet CSS -->
+		<link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
       integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
       crossorigin=""
     />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css" />
-
-    <!-- Font Awesome JS -->
-    <script src="https://kit.fontawesome.com/c82a0e1bb0.js" crossorigin="anonymous"></script>
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="libs/css/styles.css" />
-
-    <title>Worldasaurus2</title>
-    <link rel="shortcut icon" href="favicon.ico" />
-  </head>
-  <body>
-    <div id="preloader"></div>
-    <nav id="nav-bar">
-      <img src="images/worldasaurus.png" alt="dino logo" width="50px" height="70px" />
-      <div id="inner-nav-container">
-        <h1 id="main-title">Worldasaurus2</h1>
-        <div class="input-group mb-3">
-          <div class="input-group-prepend" style="margin-left: 10px">
-            <label class="input-group-text" for="countrySelector">Country</label>
-          </div>
-          <select class="custom-select" id="country-selector">
-            <option selected>Choose...</option>
-          </select>
-        </div>
-      </div>
-    </nav>
-        <div id="click-background" ></div>
-
-    <div id="mapid"></div>
-
-    <div id="logo-nav"></div>
-
-    <div class="modal" id="map-pin-modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div style="text-align: right">
-              <button type="button" style="color: #003380" id="close-poi-info" class="close" data-dismiss="modal">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+		<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css" />
+		<!-- Font Awesome JS -->
+		<script src="https://kit.fontawesome.com/c82a0e1bb0.js" crossorigin="anonymous"></script>
+		<!-- Custom CSS -->
+		<link rel="stylesheet" type="text/css" href="libs/css/styles.css" />
+		<title>Worldasaurus2</title>
+		<link rel="shortcut icon" href="favicon.ico" />
+	</head>
+	<body>
+		<div id="preloader"></div>
+		<nav id="nav-bar">
+			<img src="images/worldasaurus.png" alt="dino logo" width="50px" height="70px" />
+			<div id="inner-nav-container">
+				<h1 id="main-title">Worldasaurus2</h1>
+				<div class="input-group mb-3">
+					<div class="input-group-prepend" style="margin-left: 10px">
+						<label class="input-group-text" for="countrySelector">Country</label>
+					</div>
+					<select class="custom-select" id="country-selector">
+						<option selected>Choose...</option>
+					</select>
+				</div>
+			</div>
+		</nav>
+		<div id="click-background" ></div>
+		<div id="mapid"></div>
+		<div id="logo-nav"></div>
+		<div class="modal" id="map-pin-modal" tabindex="-1" role="dialog">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-body">
+						<div style="text-align: right">
+							<button type="button" style="color: #003380" id="close-poi-info" class="close" data-dismiss="modal">
                 &times;
               </button>
-            </div>
-            <h2 id="poi-name"></h2>
-            <div id="poi-content">
-              <div>
-                <span id="poi-coords-lat"></span><br />
-                <span id="poi-coords-lng"></span><br />
-                <span id="poi-pop"></span>
-              </div>
-              <a id="poi-image-link" href="" target="_blank">
-                <img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="poi-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
-              /></a>
-            </div>
-            <p id="poi-text" style="font-size: 10px"></p>
-            <p id="poi-link"></p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="country-info-modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div style="text-align: right">
-              <button type="button" style="color: #003380" id="close-country-info" class="close" data-dismiss="modal">
+						</div>
+						<h2 id="poi-name"></h2>
+						<div id="poi-content">
+							<div>
+								<span id="poi-coords-lat"></span>
+								<br />
+								<span id="poi-coords-lng"></span>
+								<br />
+								<span id="poi-pop"></span>
+							</div>
+							<a id="poi-image-link" href="" target="_blank">
+								<img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="poi-image" height="150px" width="140px" style="float: right; margin: 5px" alt=""
+              />
+							</a>
+						</div>
+						<p id="poi-text" style="font-size: 10px"></p>
+						<p id="poi-link"></p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal" id="country-info-modal" tabindex="-1" role="dialog">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-body">
+						<div style="text-align: right">
+							<button type="button" style="color: #003380" id="close-country-info" class="close" data-dismiss="modal">
                 &times;
               </button>
-            </div>
-            <h2 class="country-name"></h2>
-            <div style="display: flex; flex-direction: column">
-              <img alt="" id="country-flag" width="100px" height="auto" />
-              <ul id="country-facts-list"></ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="country-images-modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div style="text-align: right">
-              <button type="button" style="color: #003380" id="close-country-images" class="close" data-dismiss="modal">
+						</div>
+						<h2 class="country-name"></h2>
+						<div style="display: flex; flex-direction: column">
+							<img alt="" id="country-flag" width="100px" height="auto" />
+							<ul id="country-facts-list"></ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal" id="country-images-modal" tabindex="-1" role="dialog">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-body">
+						<div style="text-align: right">
+							<button type="button" style="color: #003380" id="close-country-images" class="close" data-dismiss="modal">
                 &times;
               </button>
-            </div>
-            <h2>Photos</h2>
-
-            <div style="position: relative">
-           
-                <img
+						</div>
+						<h2>Photos</h2>
+						<div style="position: relative">
+							<img
                   src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif"
                   alt=""
                   id="country-photo"
@@ -125,8 +118,8 @@
                   height="160px"
                   style="position: absolute; top: 0; left: 0; object-fit: cover;"
                   
-                />   
-                <div
+                />
+							<div
                 id="photo-controls"
                 style="
                   color: white;
@@ -143,52 +136,48 @@
 
                 "
               >
-                <i class="fas fa-chevron-left" id="photo-left"></i>
-                <i class="fas fa-chevron-right" id="photo-right"></i>
-
-            </div>
-                <ul id="country-photo-info"></ul>
-
-              </div>
-            
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  <div class="modal" id="country-currency-modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        <div style="text-align: right">
-          <button type="button" style="color: #003380" id="close-country-currency" class="close" data-dismiss="modal">
+								<i class="fas fa-chevron-left" id="photo-left"></i>
+								<i class="fas fa-chevron-right" id="photo-right"></i>
+							</div>
+							<ul id="country-photo-info"></ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="country-currency-modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div style="text-align: right">
+						<button type="button" style="color: #003380" id="close-country-currency" class="close" data-dismiss="modal">
             &times;
           </button>
-        </div>
-        <h2>Currency</h2>
-        <div style="display: flex; flex-direction: column">
-          <img alt="" id="country-currency" width="100px" height="auto" />
-          <ul id="country-currency-list"></ul>
-        </div>
-        <div>
-          <a id="currency-image-link" href="https://en.wikipedia.org" target="_blank">
-            <img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="currency-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
-          /></a>
-        </div>
-        <p id="currency-text" style="font-size: 10px">Loading...</p>
-        <p id="currency-link"></p>
-      </div>
-    </div>
-  </div>
-</div>
-
-    <div class="modal" id="country-weather-modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div style="text-align: right">
-              <button
+					</div>
+					<h2>Currency</h2>
+					<div style="display: flex; flex-direction: column">
+						<img alt="" id="country-currency" width="100px" height="auto" />
+						<ul id="country-currency-list"></ul>
+					</div>
+					<div>
+						<a id="currency-image-link" href="https://en.wikipedia.org" target="_blank">
+							<img src="https://www.animatedimages.org/data/media/1667/animated-world-globe-image-0013.gif" id="currency-image" max-height="150px" width="150px" style="float: right; margin: 5px" alt=""
+          />
+						</a>
+					</div>
+					<p id="currency-text" style="font-size: 10px">Loading...</p>
+					<p id="currency-link"></p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="country-weather-modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div style="text-align: right">
+						<button
                 type="button"
                 style="color: #003380"
                 id="close-country-weather"
@@ -197,61 +186,63 @@
               >
                 &times;
               </button>
-            </div>
-            <h2>Weather</h2>
-            <div style="display: flex; flex-direction: column;">
-                          <div style="display: flex; flex-direction: row">
-
-              <img alt="" id="weather-image" width="100px" height="auto" />
-                <img alt="" id="weather-symbol" width="100px" height="auto" />
-                </div>
-                <br/>
-              <ul id="country-weather-list"></ul>
-              <ul id="weather-photo-info"></ul>
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="settings-modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div style="text-align: right">
-              <button type="button" style="color: #003380" id="close-settings" class="close" data-dismiss="modal">
+					</div>
+					<h2>Weather</h2>
+					<div style="display: flex; flex-direction: column;">
+						<div style="display: flex; flex-direction: row">
+							<img alt="" id="weather-image" width="100px" height="auto" />
+							<img alt="" id="weather-symbol" width="100px" height="auto" />
+						</div>
+						<br/>
+						<ul id="country-weather-list"></ul>
+						<ul id="weather-photo-info"></ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="settings-modal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-body">
+					<div style="text-align: right">
+						<button type="button" style="color: #003380" id="close-settings" class="close" data-dismiss="modal">
                 &times;
               </button>
-            </div>
-            <h2>Settings</h2>
-            <div style="display: flex; flex-direction: column">
-              <img alt="" id="country-flag" width="100px" height="auto" />
-              <ul id="country-facts-list"></ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- JQuery Script -->
-    <script type="application/javascript" src="libs/js/jqueryv3.5.1.js"></script>
+					</div>
+					<h2>Settings</h2>
+          <div style="display: flex; flex-direction: column">
+            <span>Country shading hue</span>
+            <div id="color-selector" style="display: flex; flex-wrap: wrap;   width: 200px; height: 35px"></div>
+                        <span>Country shading opacity:</span>
 
-    <script type="module" src="libs/js/script.js"></script>
+            <div class="slidecontainer">
+  <input type="range" min="1" max="10" value="5" class="slider" id="outline-alpha">
+</div>
+                        <span style="padding-bottom: 2px; padding-top: 5px">Map style:</span>
+            <div id="style-selector" style="display: flex; flex-wrap: wrap;   width: 200px; height: 50px"></div>
 
-    <!-- Leaflet Scripts -->
-    <script
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- JQuery Script -->
+<script type="application/javascript" src="libs/js/jqueryv3.5.1.js"></script>
+<script type="module" src="libs/js/script.js"></script>
+<!-- Leaflet Scripts -->
+<script
       src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
       integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
       crossorigin=""
     ></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
-
-    <!-- Bootstrap Script -->
-    <script
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+<!-- Bootstrap Script -->
+<script
       src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
       crossorigin="anonymous"
     ></script>
   </body>
-</html>
+  </html>
